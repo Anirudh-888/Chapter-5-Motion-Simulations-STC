@@ -1,0 +1,2222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speed & Motion Simulation | Class 9 Physics</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Chart.js v4 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- PixiJS v8 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.6.6/pixi.min.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #080a10;
+            --panel-bg: #111522;
+            --panel-border: #1e263d;
+            --panel-header: #171c2e;
+            --accent-cyan: #00f0ff;
+            --accent-magenta: #ff0077;
+            --accent-amber: #ffb700;
+            --accent-green: #00ff88;
+            --accent-purple: #9d4edd;
+            --accent-red: #ff3344;
+            --text-main: #e2e8f0;
+            --text-muted: #8494ab;
+            --font-main: 'Inter', sans-serif;
+            --font-digital: 'Orbitron', monospace;
+            --font-mono: 'Share Tech Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(180deg, #151b2c 0%, #0c0f18 100%);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            z-index: 20;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-title i.logo-icon {
+            font-size: 28px;
+            color: var(--accent-amber);
+            filter: drop-shadow(0 0 10px rgba(255, 183, 0, 0.6));
+        }
+
+        .header-title h1 {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(90deg, #ffffff, var(--accent-amber), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            background: #1a2133;
+            color: var(--text-main);
+            border: 1px solid var(--panel-border);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: var(--font-main);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #25304a;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(0,240,255,0.25);
+            transform: translateY(-1px);
+        }
+
+        .btn-cyan {
+            background: rgba(0, 240, 255, 0.12);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+        .btn-cyan:hover {
+            background: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 0 16px rgba(0,240,255,0.4);
+        }
+
+        .btn-amber {
+            background: rgba(255, 183, 0, 0.12);
+            border-color: var(--accent-amber);
+            color: var(--accent-amber);
+        }
+        .btn-amber:hover {
+            background: rgba(255, 183, 0, 0.25);
+            box-shadow: 0 0 16px rgba(255, 183, 0, 0.4);
+        }
+
+        .btn-green {
+            background: rgba(0, 255, 136, 0.12);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+        .btn-green:hover {
+            background: rgba(0, 255, 136, 0.25);
+            box-shadow: 0 0 16px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn-reset {
+            background: rgba(255, 0, 119, 0.12);
+            border-color: var(--accent-magenta);
+            color: var(--accent-magenta);
+        }
+        .btn-reset:hover {
+            background: rgba(255, 0, 119, 0.25);
+            box-shadow: 0 0 16px rgba(255, 0, 119, 0.4);
+        }
+
+        /* MAIN APP LAYOUT */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px;
+            max-width: 1640px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* TRACK PANEL (PIXI CANVAS) */
+        .track-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.6), 0 8px 32px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title i {
+            color: var(--accent-amber);
+        }
+
+        .track-legend {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        #pixi-container {
+            width: 100%;
+            height: 280px;
+            background: #06080e;
+            border-radius: 10px;
+            border: 1px solid #1a2236;
+            overflow: hidden;
+            position: relative;
+            cursor: default;
+            touch-action: none;
+        }
+
+        .canvas-overlay-guide {
+            position: absolute;
+            top: 12px;
+            left: 16px;
+            background: rgba(10, 14, 24, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 5;
+        }
+
+        .canvas-hint {
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            background: rgba(10, 14, 24, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 183, 0, 0.25);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: var(--accent-amber);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 5;
+        }
+
+        /* DASHBOARD INSTRUMENTS GRID */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.95fr 0.95fr 1.25fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 1300px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dashboard-card {
+            background: linear-gradient(145deg, #131724 0%, #0d101a 100%);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+            gap: 12px;
+        }
+
+        /* 1. SPEEDOMETER DIAL & DIGITAL SPEED */
+        .speedometer-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .gauge-canvas-container {
+            position: relative;
+            width: 220px;
+            height: 140px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        #speedometer-canvas {
+            width: 220px;
+            height: 140px;
+        }
+
+        .speed-digital-hub {
+            text-align: center;
+            margin-top: 4px;
+            background: rgba(6, 9, 15, 0.8);
+            border: 1px solid #1c263c;
+            border-radius: 8px;
+            padding: 8px 14px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .speed-primary-val {
+            font-family: var(--font-digital);
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--accent-green);
+            text-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+            line-height: 1;
+        }
+
+        .speed-secondary-val {
+            font-family: var(--font-mono);
+            font-size: 15px;
+            color: var(--accent-cyan);
+        }
+
+        .speed-tier-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tier-idle { background: rgba(132, 148, 171, 0.2); color: var(--text-muted); }
+        .tier-slow { background: rgba(0, 255, 136, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .tier-cruising { background: rgba(0, 240, 255, 0.2); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+        .tier-fast { background: rgba(255, 183, 0, 0.2); color: var(--accent-amber); border: 1px solid var(--accent-amber); }
+        .tier-hyper { background: rgba(255, 0, 119, 0.25); color: var(--accent-magenta); border: 1px solid var(--accent-magenta); box-shadow: 0 0 10px var(--accent-magenta); }
+
+        /* 2. STOPWATCH */
+        .stopwatch-container {
+            background: #05070e;
+            border: 2px solid #1c263e;
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: inset 0 2px 14px rgba(0,0,0,0.9);
+            gap: 10px;
+        }
+
+        .stopwatch-display {
+            font-family: var(--font-digital);
+            font-size: 34px;
+            font-weight: 900;
+            color: var(--accent-cyan);
+            letter-spacing: 2px;
+            text-shadow: 0 0 16px rgba(0, 240, 255, 0.6);
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .stopwatch-ms {
+            font-size: 20px;
+            color: rgba(0, 240, 255, 0.7);
+        }
+
+        .stopwatch-controls {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-ctrl {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 11px;
+            justify-content: center;
+        }
+
+        .stopwatch-status {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+        .status-dot.active {
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse-dot 1s infinite alternate;
+        }
+
+        @keyframes pulse-dot {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* 3. ROLLING ODOMETER */
+        .odometer-container {
+            background: #05070e;
+            border: 2px solid #1a2238;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: inset 0 2px 12px rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .odometer-digits {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            font-family: var(--font-digital);
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--accent-amber);
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 183, 0, 0.4);
+        }
+
+        .digit-box {
+            background: linear-gradient(180deg, #171d2e 0%, #090c15 100%);
+            border: 1px solid #28334e;
+            padding: 4px 7px;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 3px rgba(255,255,255,0.1);
+            min-width: 26px;
+            text-align: center;
+        }
+
+        .digit-box.dec-box {
+            background: linear-gradient(180deg, #2b1f09 0%, #150f05 100%);
+            border-color: #614614;
+            color: #ffd276;
+        }
+
+        .trip-info-row {
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 6px;
+        }
+
+        .trip-val {
+            color: var(--accent-amber);
+            font-weight: 700;
+        }
+
+        /* 4. CONTROLS & DRIVE PANEL */
+        .controls-card {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            width: 100px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .slider-custom {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 7px;
+            border-radius: 4px;
+            background: #182032;
+            outline: none;
+        }
+
+        .slider-custom::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-amber);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--accent-amber);
+            transition: transform 0.1s ease;
+        }
+
+        .slider-custom::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .preset-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 11px;
+            border-radius: 4px;
+        }
+
+        /* FORMULA MATH & CONCEPT INSIGHTS SECTION */
+        .math-concept-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 992px) {
+            .math-concept-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-live-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .equation-box {
+            background: #070a12;
+            border: 1px dashed #263350;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .equation-main {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .equation-sub {
+            font-size: 13px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 4px;
+        }
+        .fraction .numerator {
+            border-bottom: 1.5px solid var(--text-main);
+            padding-bottom: 2px;
+        }
+        .fraction .denominator {
+            padding-top: 2px;
+        }
+
+        .calc-highlight {
+            color: var(--accent-green);
+            font-weight: 700;
+            font-size: 16px;
+            font-family: var(--font-digital);
+        }
+
+        /* GRAPH & ANALYTICS PANEL */
+        .graph-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            min-height: 300px;
+        }
+
+        .graph-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab-btn {
+            background: #141b2b;
+            border: 1px solid var(--panel-border);
+            color: var(--text-muted);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: rgba(0, 240, 255, 0.15);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .graph-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            min-height: 240px;
+            margin-top: 10px;
+        }
+
+        /* CONCEPT EXPLAINER BANNER */
+        .concept-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .concept-item {
+            background: rgba(14, 18, 30, 0.6);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .concept-item h4 {
+            color: var(--accent-cyan);
+            font-size: 13px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* MODAL */
+        #info-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #121726;
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            max-width: 650px;
+            width: 90%;
+            padding: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090c14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #232c45;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-cyan);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP HEADER -->
+    <header>
+        <div class="header-title">
+            <i class="fa-solid fa-gauge-high logo-icon"></i>
+            <div>
+                <h1>Concept of Speed & Motion Simulation</h1>
+                <div class="header-subtitle">Class 9 Physics • Chapter 5 • Interactive Superbike Experiment</div>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button class="btn btn-amber" id="audio-toggle-btn" onclick="toggleAudio()">
+                <i class="fa-solid fa-volume-high" id="audio-icon"></i> Sound ON
+            </button>
+            <button class="btn btn-cyan" onclick="toggleInfoModal()">
+                <i class="fa-solid fa-circle-question"></i> Physics Guide
+            </button>
+            <button class="btn btn-reset" onclick="resetSimulation()">
+                <i class="fa-solid fa-rotate-right"></i> Reset All
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTENT -->
+    <main>
+
+        <!-- INTERACTIVE ROAD & BIKE TRACK -->
+        <section class="track-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fa-solid fa-road"></i> Dynamic Motion Track (-50 m to +50 m)
+                </div>
+                <div class="track-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--accent-magenta); box-shadow: 0 0 6px var(--accent-magenta);"></div>
+                        <span>Reference Point ($x_0$) [Click/Drag anywhere]</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--accent-amber); box-shadow: 0 0 6px var(--accent-amber);"></div>
+                        <span>Superbike [Click & Drag to move & test speed]</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--accent-cyan);"></div>
+                        <span>Road Markers (5m increments)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PIXI CANVAS -->
+            <div id="pixi-container">
+                <div class="canvas-overlay-guide">
+                    <i class="fa-solid fa-motorcycle"></i> <strong>Interactive Bike:</strong> Drag mouse to move bike & generate real-time speed!
+                </div>
+                <div class="canvas-hint">
+                    <i class="fa-solid fa-flag"></i> <strong>Start Flag:</strong> Drag or click to change Reference Point ($x_0$)
+                </div>
+            </div>
+        </section>
+
+        <!-- DASHBOARD GAUGES & INSTRUMENTS -->
+        <section class="dashboard-grid">
+
+            <!-- 1. SPEEDOMETER (ANALOG DIAL + DIGITAL READOUT) -->
+            <div class="dashboard-card">
+                <div class="panel-title" style="color: var(--accent-green);">
+                    <i class="fa-solid fa-gauge"></i> 1. REAL-TIME SPEEDOMETER
+                </div>
+
+                <div class="speedometer-wrapper">
+                    <div class="gauge-canvas-container">
+                        <canvas id="speedometer-canvas" width="240" height="140"></canvas>
+                    </div>
+
+                    <div class="speed-digital-hub">
+                        <div>
+                            <div class="speed-primary-val" id="instant-speed-val">0.0</div>
+                            <div style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);">METERS / SEC (m/s)</div>
+                        </div>
+                        <div style="border-left: 1px solid #1e263d; height: 35px;"></div>
+                        <div>
+                            <div class="speed-secondary-val" id="kmh-speed-val">0.0 km/h</div>
+                            <div class="speed-tier-badge tier-idle" id="speed-tier-badge">IDLE (0 m/s)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px;">
+                    <span>$1\text{ m/s} = 3.6\text{ km/h}$</span>
+                    <span id="avg-speed-badge" style="color: var(--accent-cyan); font-family: var(--font-mono);">Avg Speed: 0.0 m/s</span>
+                </div>
+            </div>
+
+            <!-- 2. DIGITAL STOPWATCH -->
+            <div class="dashboard-card">
+                <div class="panel-title" style="color: var(--accent-cyan);">
+                    <i class="fa-solid fa-stopwatch"></i> 2. DIGITAL STOPWATCH ($t$)
+                </div>
+
+                <div class="stopwatch-container">
+                    <div class="stopwatch-display">
+                        <span id="sw-min">00</span>:<span id="sw-sec">00</span><span class="stopwatch-ms">.<span id="sw-ms">00</span></span>
+                    </div>
+
+                    <div class="stopwatch-status">
+                        <div class="status-dot" id="sw-status-dot"></div>
+                        <span id="sw-status-text">AUTO-START ON MOTION</span>
+                    </div>
+
+                    <div class="stopwatch-controls">
+                        <button class="btn btn-ctrl btn-cyan" id="sw-start-btn" onclick="toggleStopwatch()">
+                            <i class="fa-solid fa-play" id="sw-btn-icon"></i> Start
+                        </button>
+                        <button class="btn btn-ctrl btn-reset" onclick="resetStopwatch()">
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div style="font-size: 11px; color: var(--text-muted); text-align: center;">
+                    Elapsed Time: $\Delta t = t_2 - t_1$ (Seconds)
+                </div>
+            </div>
+
+            <!-- 3. MECHANICAL ODOMETER -->
+            <div class="dashboard-card">
+                <div class="panel-title" style="color: var(--accent-amber);">
+                    <i class="fa-solid fa-route"></i> 3. TOTAL DISTANCE (ODOMETER)
+                </div>
+
+                <div class="odometer-container">
+                    <div style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono); text-align: center; letter-spacing: 1px;">
+                        TOTAL PATH TRAVELED ($s$)
+                    </div>
+                    <div class="odometer-digits" id="odometer-digits">
+                        <span class="digit-box">0</span>
+                        <span class="digit-box">0</span>
+                        <span class="digit-box">0</span>
+                        <span class="digit-box">0</span>
+                        <span style="align-self: flex-end; margin-bottom: 2px; color: var(--accent-amber);">.</span>
+                        <span class="digit-box dec-box">0</span>
+                    </div>
+                    <div style="text-align: center; font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);">
+                        METERS
+                    </div>
+
+                    <div class="trip-info-row">
+                        <span>Distance from Ref Point ($x_0$):</span>
+                        <span class="trip-val" id="disp-from-ref">+0.0 m</span>
+                    </div>
+                </div>
+
+                <div style="font-size: 11px; color: var(--text-muted);">
+                    Scalar path length $s \ge 0$. Distance always adds up!
+                </div>
+            </div>
+
+            <!-- 4. DRIVE & REFERENCE CONTROLS -->
+            <div class="dashboard-card controls-card">
+                <div class="panel-title">
+                    <i class="fa-solid fa-sliders"></i> 4. MOTION & REFERENCE CONTROLS
+                </div>
+
+                <!-- Auto Velocity / Throttle Slider -->
+                <div class="control-row">
+                    <span class="control-label"><i class="fa-solid fa-gauge-simple-high"></i> Throttle:</span>
+                    <input type="range" min="-30" max="30" step="0.5" value="0" class="slider-custom" id="throttle-slider">
+                    <span style="font-family: var(--font-mono); width: 55px; text-align: right; color: var(--accent-green);" id="throttle-val-text">0.0 m/s</span>
+                </div>
+
+                <!-- Reference Point Slider -->
+                <div class="control-row">
+                    <span class="control-label" style="color: var(--accent-magenta);"><i class="fa-solid fa-flag"></i> Ref ($x_0$):</span>
+                    <input type="range" min="-50" max="50" step="0.5" value="-30" class="slider-custom" id="ref-slider" style="accent-color: var(--accent-magenta);">
+                    <span style="font-family: var(--font-mono); width: 55px; text-align: right; color: var(--accent-magenta);" id="ref-val-text">-30.0m</span>
+                </div>
+
+                <!-- Quick Presets -->
+                <div class="preset-btns">
+                    <button class="btn btn-sm btn-cyan" onclick="setPresetMode('uniform-10')"><i class="fa-solid fa-forward"></i> Uniform 10 m/s</button>
+                    <button class="btn btn-sm btn-amber" onclick="setPresetMode('uniform-20')"><i class="fa-solid fa-bolt"></i> Fast 20 m/s</button>
+                    <button class="btn btn-sm btn-green" onclick="setPresetMode('accel')"><i class="fa-solid fa-arrow-trend-up"></i> Accelerating</button>
+                    <button class="btn btn-sm" onclick="setPresetMode('traffic')"><i class="fa-solid fa-traffic-light"></i> Stop & Go</button>
+                    <button class="btn btn-sm btn-reset" onclick="snapRefToBike()"><i class="fa-solid fa-location-pin"></i> Set Ref Here</button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- LIVE MATHEMATICAL FORMULA BREAKDOWN & CONCEPTS -->
+        <section class="math-concept-grid">
+
+            <!-- LIVE FORMULA CALCULATION CARD -->
+            <div class="formula-live-card">
+                <div class="panel-title" style="color: var(--accent-cyan);">
+                    <i class="fa-solid fa-square-root-variable"></i> Live Physics Calculation
+                </div>
+
+                <div class="equation-box">
+                    <div class="equation-main">
+                        <span>$\text{Speed } (v) =$</span>
+                        <div class="fraction">
+                            <span class="numerator">$\text{Distance Traveled } (s)$</span>
+                            <span class="denominator">$\text{Time Elapsed } (t)$</span>
+                        </div>
+                    </div>
+
+                    <div class="equation-sub" id="calc-step-instant">
+                        <span>Instantaneous Speed: $v = \frac{\Delta s}{\Delta t} =$</span>
+                        <span class="calc-highlight" id="calc-instant-result">0.0 m/s</span>
+                        <span style="color: var(--text-muted); font-size: 11px;">(Reading on the Speedometer right now)</span>
+                    </div>
+
+                    <div class="equation-sub" id="calc-step-avg">
+                        <span>Average Speed: $v_{\text{avg}} =$</span>
+                        <div class="fraction">
+                            <span class="numerator" id="calc-total-dist">0.0 m</span>
+                            <span class="denominator" id="calc-total-time">0.0 s</span>
+                        </div>
+                        <span>$=$</span>
+                        <span class="calc-highlight" style="color: var(--accent-cyan);" id="calc-avg-result">0.0 m/s</span>
+                    </div>
+                </div>
+
+                <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">
+                    <i class="fa-solid fa-lightbulb" style="color: var(--accent-amber);"></i> <strong>Key Takeaway:</strong> Speed is a <strong>scalar quantity</strong> (always positive magnitude, no direction required). The speedometer in vehicles measures <em>instantaneous speed</em>.
+                </div>
+            </div>
+
+            <!-- SYNCHRONIZED GRAPH PANEL -->
+            <div class="graph-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-chart-line"></i> Real-time Motion Analytics
+                    </div>
+                    <div class="graph-tabs">
+                        <button class="tab-btn active" id="tab-st" onclick="switchGraph('st')">Distance - Time ($s\text{-}t$)</button>
+                        <button class="tab-btn" id="tab-vt" onclick="switchGraph('vt')">Speed - Time ($v\text{-}t$)</button>
+                    </div>
+                </div>
+
+                <div class="graph-container">
+                    <canvas id="motion-chart"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- EDUCATIONAL CONCEPT CARDS -->
+        <section class="concept-cards-container">
+            <div class="concept-item">
+                <h4><i class="fa-solid fa-person-running"></i> What is Speed?</h4>
+                <p>Speed is defined as the <strong>rate of change of distance</strong> with time. It tells us how fast an object is moving. SI unit is <strong>$\text{m/s}$</strong>, commercial unit is <strong>$\text{km/h}$</strong>.</p>
+            </div>
+            <div class="concept-item">
+                <h4><i class="fa-solid fa-gauge"></i> Instantaneous vs Average Speed</h4>
+                <p><strong>Instantaneous Speed</strong> is the speed of an object at a specific instant (what the speedometer shows). <strong>Average Speed</strong> is total distance divided by total time: $v_{\text{avg}} = \frac{s_{\text{total}}}{t_{\text{total}}}$.</p>
+            </div>
+            <div class="concept-item">
+                <h4><i class="fa-solid fa-arrows-left-right-to-line"></i> Uniform vs Non-Uniform Speed</h4>
+                <p><strong>Uniform Speed:</strong> Object covers equal distances in equal intervals of time (straight line on $s\text{-}t$ graph). <strong>Non-Uniform Speed:</strong> Object covers unequal distances in equal intervals of time.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- EDUCATIONAL MODAL -->
+    <div id="info-modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--panel-border); padding-bottom: 12px;">
+                <h3 style="font-size: 18px; color: var(--accent-amber);"><i class="fa-solid fa-book-open"></i> Class 9 Physics: Speed & Motion Guide</h3>
+                <button onclick="toggleInfoModal()" style="background: none; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div style="font-size: 13px; line-height: 1.6; display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                    <h4 style="color: var(--accent-cyan);"><i class="fa-solid fa-circle-check"></i> 1. Definition of Speed</h4>
+                    <p>Speed of a body is the distance travelled by it per unit time:</p>
+                    <p style="font-family: var(--font-mono); background: #080c16; padding: 6px 12px; border-radius: 4px; margin-top: 4px; color: var(--accent-green);">
+                        $$\text{Speed } (v) = \frac{\text{Distance } (s)}{\text{Time } (t)}$$
+                    </p>
+                </div>
+
+                <div>
+                    <h4 style="color: var(--accent-cyan);"><i class="fa-solid fa-circle-check"></i> 2. Speedometer vs. Odometer</h4>
+                    <ul style="margin-left: 20px; margin-top: 4px;">
+                        <li><strong>Speedometer:</strong> Measures and indicates the <em>instantaneous speed</em> of the vehicle in $\text{km/h}$ or $\text{m/s}$.</li>
+                        <li><strong>Odometer:</strong> Measures and records the <em>total distance</em> covered by the vehicle.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 style="color: var(--accent-cyan);"><i class="fa-solid fa-circle-check"></i> 3. Unit Conversion Formula</h4>
+                    <p>To convert from $\text{km/h}$ to $\text{m/s}$, multiply by $\frac{5}{18}$:</p>
+                    <p style="font-family: var(--font-mono); background: #080c16; padding: 6px 12px; border-radius: 4px; margin-top: 4px; color: var(--accent-amber);">
+                        $1\text{ km/h} = \frac{1000\text{ m}}{3600\text{ s}} = \frac{5}{18}\text{ m/s} \approx 0.278\text{ m/s}$ &emsp; | &emsp; $1\text{ m/s} = 3.6\text{ km/h}$
+                    </p>
+                </div>
+
+                <div>
+                    <h4 style="color: var(--accent-cyan);"><i class="fa-solid fa-circle-check"></i> 4. How to Experiment with this Simulation:</h4>
+                    <ol style="margin-left: 20px; margin-top: 4px;">
+                        <li><strong>Mouse Dragging:</strong> Click on the big bike and drag it fast or slow. When you stop moving the mouse, the speed instantly drops to 0.0 m/s!</li>
+                        <li><strong>Moving Reference Point:</strong> Drag the pink start flag to where the race begins. Watch the distance from reference point update.</li>
+                        <li><strong>Stopwatch:</strong> Notice the stopwatch automatically records the time elapsed as you ride.</li>
+                        <li><strong>Presets:</strong> Click "Uniform 10 m/s" to observe a textbook constant speed motion and its linear graph!</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; text-align: right;">
+                <button class="btn btn-cyan" onclick="toggleInfoModal()">Got it, let's explore!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN SCRIPT LOGIC -->
+    <script>
+        // ==========================================
+        // 1. SIMULATION STATE & CONSTANTS
+        // ==========================================
+        const MIN_X = -50;
+        const MAX_X = 50;
+
+        let state = {
+            xBike: -30.0,            // Bike absolute position in meters (-50 to +50)
+            xRef: -30.0,             // Reference / Start point in meters
+            vBike: 0.0,              // Current velocity in m/s (signed)
+            smoothedSpeed: 0.0,      // Filtered speed for gauge needle
+            totalDistance: 0.0,      // Odometer reading in meters
+            isDraggingBike: false,
+            isDraggingRef: false,
+            lastDragTime: 0,
+            lastDragX: -30.0,
+            lastPointerMoveTime: 0,  // To detect when pointer has stopped moving
+            
+            // Stopwatch
+            stopwatchRunning: false,
+            elapsedSeconds: 0.0,
+            stopwatchAutoMode: true,
+            stationaryTime: 0.0,
+            
+            // Motion Presets
+            presetMode: 'none',      // 'none', 'uniform-10', 'uniform-20', 'accel', 'traffic'
+            presetTimer: 0.0,
+            accelRate: 2.0,
+            
+            // Sound
+            audioEnabled: true,
+            
+            // Active Graph Tab
+            activeGraph: 'st'        // 'st' (Distance-Time) or 'vt' (Speed-Time)
+        };
+
+        // Graph recording history
+        const historyData = {
+            times: [],
+            distances: [],
+            speeds: []
+        };
+        const MAX_HISTORY = 140;
+
+        // UI Element References
+        const instantSpeedVal = document.getElementById('instant-speed-val');
+        const kmhSpeedVal = document.getElementById('kmh-speed-val');
+        const speedTierBadge = document.getElementById('speed-tier-badge');
+        const avgSpeedBadge = document.getElementById('avg-speed-badge');
+        
+        const swMin = document.getElementById('sw-min');
+        const swSec = document.getElementById('sw-sec');
+        const swMs = document.getElementById('sw-ms');
+        const swStartBtn = document.getElementById('sw-start-btn');
+        const swBtnIcon = document.getElementById('sw-btn-icon');
+        const swStatusDot = document.getElementById('sw-status-dot');
+        const swStatusText = document.getElementById('sw-status-text');
+
+        const odometerDigits = document.getElementById('odometer-digits');
+        const dispFromRef = document.getElementById('disp-from-ref');
+
+        const throttleSlider = document.getElementById('throttle-slider');
+        const throttleValText = document.getElementById('throttle-val-text');
+        const refSlider = document.getElementById('ref-slider');
+        const refValText = document.getElementById('ref-val-text');
+
+        const calcInstantResult = document.getElementById('calc-instant-result');
+        const calcTotalDist = document.getElementById('calc-total-dist');
+        const calcTotalTime = document.getElementById('calc-total-time');
+        const calcAvgResult = document.getElementById('calc-avg-result');
+
+        // PIXI & Chart variables
+        let app;
+        let chart;
+        let trackContainer, bikeGroup, refGroup, roadGraphics, sceneryContainer;
+        let wheelFront, wheelRear, headlightGlow, exhaustGlow;
+
+        // ==========================================
+        // 2. SYNTHESIZED WEB AUDIO (BIKE ENGINE)
+        // ==========================================
+        let audioCtx = null;
+        let engineOsc = null;
+        let engineGain = null;
+        let engineFilter = null;
+
+        function initAudio() {
+            if (audioCtx) return;
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+
+                // Engine Oscillator (sawtooth for engine buzz)
+                engineOsc = audioCtx.createOscillator();
+                engineOsc.type = 'sawtooth';
+                engineOsc.frequency.setValueAtTime(45, audioCtx.currentTime);
+
+                // Low-pass filter to make it sound like a throaty motorcycle engine
+                engineFilter = audioCtx.createBiquadFilter();
+                engineFilter.type = 'lowpass';
+                engineFilter.frequency.setValueAtTime(300, audioCtx.currentTime);
+
+                // Gain control
+                engineGain = audioCtx.createGain();
+                engineGain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+                engineOsc.connect(engineFilter);
+                engineFilter.connect(engineGain);
+                engineGain.connect(audioCtx.destination);
+
+                engineOsc.start();
+            } catch (e) {
+                console.warn('AudioContext not supported or blocked:', e);
+            }
+        }
+
+        function updateAudioEngine(speed) {
+            if (!state.audioEnabled || !audioCtx || !engineOsc || !engineGain) return;
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const clampedSpeed = Math.min(speed, 35);
+            if (clampedSpeed > 0.4) {
+                const targetFreq = 50 + (clampedSpeed / 35) * 210;
+                const targetFilter = 300 + (clampedSpeed / 35) * 800;
+                const targetVolume = Math.min(0.18, 0.04 + (clampedSpeed / 35) * 0.12);
+
+                engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.08);
+                engineFilter.frequency.setTargetAtTime(targetFilter, audioCtx.currentTime, 0.08);
+                engineGain.gain.setTargetAtTime(targetVolume, audioCtx.currentTime, 0.08);
+            } else {
+                engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.08);
+            }
+        }
+
+        function toggleAudio() {
+            state.audioEnabled = !state.audioEnabled;
+            const btn = document.getElementById('audio-toggle-btn');
+            if (state.audioEnabled) {
+                btn.className = 'btn btn-amber';
+                btn.innerHTML = '<i class="fa-solid fa-volume-high" id="audio-icon"></i> Sound ON';
+                initAudio();
+            } else {
+                btn.className = 'btn';
+                btn.innerHTML = '<i class="fa-solid fa-volume-xmark" id="audio-icon"></i> Sound MUTED';
+                if (engineGain && audioCtx) {
+                    engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+                }
+            }
+        }
+
+        // ==========================================
+        // 3. PIXIJS 8 CANVAS SETUP & RENDERING
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', async () => {
+            await initPixi();
+            initAnalogSpeedometer();
+            initChart();
+            setupEventListeners();
+            startSimLoop();
+            updateDashboard();
+        });
+
+        async function initPixi() {
+            const container = document.getElementById('pixi-container');
+            const width = container.clientWidth || 1000;
+            const height = container.clientHeight || 280;
+
+            app = new PIXI.Application();
+            await app.init({
+                width: width,
+                height: height,
+                backgroundColor: 0x06080e,
+                resolution: window.devicePixelRatio || 1,
+                autoDensity: true,
+                antialias: true
+            });
+
+            container.appendChild(app.canvas);
+
+            trackContainer = new PIXI.Container();
+            app.stage.addChild(trackContainer);
+
+            sceneryContainer = new PIXI.Container();
+            roadGraphics = new PIXI.Graphics();
+            refGroup = new PIXI.Container();
+            bikeGroup = new PIXI.Container();
+
+            trackContainer.addChild(sceneryContainer);
+            trackContainer.addChild(roadGraphics);
+            trackContainer.addChild(refGroup);
+            trackContainer.addChild(bikeGroup);
+
+            renderSceneryAndRoad(width, height);
+            buildRefGraphics();
+            buildBigBikeGraphics();
+
+            window.addEventListener('resize', handleResize);
+        }
+
+        function handleResize() {
+            if (!app || !app.canvas) return;
+            const container = document.getElementById('pixi-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            app.renderer.resize(width, height);
+            renderSceneryAndRoad(width, height);
+            updatePositions();
+            drawAnalogSpeedometer(state.smoothedSpeed);
+        }
+
+        function metersToPx(m) {
+            const width = app.renderer.width;
+            const margin = 60;
+            return margin + ((m - MIN_X) / (MAX_X - MIN_X)) * (width - 2 * margin);
+        }
+
+        function pxToMetersExact(px) {
+            const width = app.renderer.width;
+            const margin = 60;
+            const clampedPx = Math.max(margin, Math.min(width - margin, px));
+            return MIN_X + ((clampedPx - margin) / (width - 2 * margin)) * (MAX_X - MIN_X);
+        }
+
+        // Render Background Scenery, Road, Markers, and Ruler
+        function renderSceneryAndRoad(w, h) {
+            roadGraphics.clear();
+            sceneryContainer.removeChildren();
+
+            const roadY = h / 2 + 25;
+            const margin = 60;
+
+            // Background City Silhouette & Stars
+            const bgG = new PIXI.Graphics();
+            
+            // Cyber City Buildings in distant background
+            const bldgColors = [0x0f1526, 0x131a30, 0x0d1220, 0x17203b];
+            for (let bx = 0; bx < w; bx += 35) {
+                const bHeight = 40 + (Math.sin(bx * 0.05) * 20 + Math.cos(bx * 0.1) * 15);
+                const bColor = bldgColors[Math.floor((bx / 35) % bldgColors.length)];
+                bgG.rect(bx, roadY - 70 - bHeight, 32, bHeight + 70).fill({ color: bColor });
+
+                // Distant window lights
+                for (let wy = roadY - 65 - bHeight; wy < roadY - 70; wy += 12) {
+                    if ((bx + wy) % 5 === 0) {
+                        bgG.rect(bx + 6, wy, 4, 6).fill({ color: 0x00f0ff, alpha: 0.35 });
+                    } else if ((bx + wy) % 7 === 0) {
+                        bgG.rect(bx + 16, wy, 4, 6).fill({ color: 0xffb700, alpha: 0.3 });
+                    }
+                }
+            }
+
+            // Mountain / Horizon Line
+            bgG.rect(0, roadY - 70, w, 2).fill({ color: 0x1e273f });
+
+            // Street Lights along the road
+            for (let lx = margin; lx <= w - margin; lx += 120) {
+                bgG.rect(lx - 2, roadY - 80, 4, 45).fill({ color: 0x2e3b59 });
+                bgG.rect(lx - 6, roadY - 84, 16, 5).fill({ color: 0x475982 });
+                bgG.poly([lx - 12, roadY - 78, lx + 20, roadY - 78, lx + 45, roadY - 35, lx - 35, roadY - 35]).fill({ color: 0x00f0ff, alpha: 0.04 });
+            }
+
+            sceneryContainer.addChild(bgG);
+
+            // Road surface (Asphalt)
+            roadGraphics.rect(0, roadY - 38, w, 76).fill({ color: 0x101420 });
+            
+            // Curbs / Borders
+            roadGraphics.rect(0, roadY - 38, w, 4).fill({ color: 0x00f0ff, alpha: 0.7 });
+            roadGraphics.rect(0, roadY + 34, w, 4).fill({ color: 0x222c42 });
+
+            // Center lane dashed markings
+            for (let x = 0; x < w; x += 36) {
+                roadGraphics.rect(x, roadY - 2, 18, 3).fill({ color: 0xffb700, alpha: 0.75 });
+            }
+
+            // Ruler Base Line below road
+            const rulerY = roadY + 58;
+            roadGraphics.moveTo(margin, rulerY).lineTo(w - margin, rulerY).stroke({ color: 0x3d4e73, width: 2 });
+
+            // Tick Marks & Distance Labels
+            for (let m = MIN_X; m <= MAX_X; m += 5) {
+                const px = metersToPx(m);
+                const isMajor = (m % 10 === 0);
+                const tickLen = isMajor ? 14 : 7;
+
+                roadGraphics.moveTo(px, rulerY).lineTo(px, rulerY + tickLen).stroke({
+                    color: isMajor ? 0x00f0ff : 0x3d4e73,
+                    width: isMajor ? 2 : 1
+                });
+
+                roadGraphics.moveTo(px, roadY - 45).lineTo(px, roadY + 45).stroke({
+                    color: m === 0 ? 0xff0077 : 0x192135,
+                    width: m === 0 ? 2 : 1,
+                    alpha: m === 0 ? 0.9 : 0.4
+                });
+
+                if (isMajor) {
+                    roadGraphics.rect(px - 1.5, roadY - 50, 3, 12).fill({ color: 0x00f0ff, alpha: 0.6 });
+                    roadGraphics.circle(px, roadY - 50, 3).fill({ color: 0x00f0ff });
+
+                    const label = new PIXI.Text({
+                        text: (m > 0 ? `+${m}` : `${m}`) + 'm',
+                        style: {
+                            fontFamily: 'Share Tech Mono',
+                            fontSize: 11,
+                            fontWeight: 'bold',
+                            fill: m === 0 ? 0xff0077 : (m % 20 === 0 ? 0x00f0ff : 0x8898b5),
+                            align: 'center'
+                        }
+                    });
+                    label.anchor.set(0.5, 0);
+                    label.x = px;
+                    label.y = rulerY + 16;
+                    sceneryContainer.addChild(label);
+                }
+            }
+        }
+
+        // --- REFERENCE POINT GRAPHICS ---
+        function buildRefGraphics() {
+            refGroup.removeChildren();
+
+            const g = new PIXI.Graphics();
+
+            g.moveTo(0, -110).lineTo(0, 45).stroke({ color: 0xff0077, width: 2, alpha: 0.8 });
+            g.rect(-2, -65, 4, 65).fill({ color: 0xff0077 });
+            g.poly([0, -65, 34, -50, 0, -35]).fill({ color: 0xff0077 });
+            g.poly([2, -62, 28, -50, 2, -38]).fill({ color: 0xff4d9d });
+
+            g.circle(0, 0, 10).fill({ color: 0xff0077, alpha: 0.3 });
+            g.circle(0, 0, 6).fill({ color: 0xff0077 });
+            g.circle(0, 0, 2.5).fill({ color: 0xffffff });
+
+            refGroup.addChild(g);
+
+            const refLabel = new PIXI.Text({
+                text: 'REF POINT (x₀)',
+                style: {
+                    fontFamily: 'Orbitron',
+                    fontSize: 10,
+                    fontWeight: '900',
+                    fill: 0xff0077,
+                    dropShadow: { color: 0x000000, blur: 5 }
+                }
+            });
+            refLabel.anchor.set(0.5, 1);
+            refLabel.y = -72;
+            refGroup.addChild(refLabel);
+
+            refGroup.eventMode = 'static';
+            refGroup.cursor = 'ew-resize';
+
+            refGroup.on('pointerdown', (e) => {
+                state.isDraggingRef = true;
+                refGroup.alpha = 0.85;
+            });
+        }
+
+        // --- BIG SUPERBIKE GRAPHICS & DETAILS ---
+        function buildBigBikeGraphics() {
+            bikeGroup.removeChildren();
+
+            const scale = 1.35; // Big Bike prominence
+
+            // 1. Headlight projection beam
+            headlightGlow = new PIXI.Graphics();
+            headlightGlow.poly([
+                42 * scale, -10 * scale,
+                110 * scale, -30 * scale,
+                110 * scale, 25 * scale,
+                42 * scale, 5 * scale
+            ]).fill({ color: 0x00f0ff, alpha: 0.25 });
+            bikeGroup.addChild(headlightGlow);
+
+            // 2. Exhaust Jet Fire Glow
+            exhaustGlow = new PIXI.Graphics();
+            exhaustGlow.poly([
+                -46 * scale, 6 * scale,
+                -75 * scale, 3 * scale,
+                -70 * scale, 12 * scale
+            ]).fill({ color: 0xff9900, alpha: 0.8 });
+            bikeGroup.addChild(exhaustGlow);
+
+            // 3. Bike Chassis & Wheels
+            const chassis = new PIXI.Graphics();
+
+            wheelRear = createWheelGraphics(scale);
+            wheelRear.x = -34 * scale;
+            wheelRear.y = 12 * scale;
+            bikeGroup.addChild(wheelRear);
+
+            wheelFront = createWheelGraphics(scale);
+            wheelFront.x = 34 * scale;
+            wheelFront.y = 12 * scale;
+            bikeGroup.addChild(wheelFront);
+
+            // Frame & Engine Block
+            chassis.moveTo(-34 * scale, 12 * scale).lineTo(-8 * scale, 4 * scale).stroke({ color: 0x2b374e, width: 5 * scale });
+            chassis.moveTo(-8 * scale, 4 * scale).lineTo(34 * scale, 12 * scale).stroke({ color: 0x2b374e, width: 4 * scale });
+            
+            chassis.roundRect(-14 * scale, -4 * scale, 24 * scale, 18 * scale, 3 * scale).fill({ color: 0x141a29 }).stroke({ color: 0x3e4d6e, width: 1.5 * scale });
+            for (let ey = -1; ey <= 10; ey += 3.5) {
+                chassis.rect(-12 * scale, ey * scale, 16 * scale, 1.5 * scale).fill({ color: 0x5a6d96 });
+            }
+
+            // Exhaust Pipe
+            chassis.moveTo(-4 * scale, 10 * scale).lineTo(-30 * scale, 8 * scale).lineTo(-45 * scale, 7 * scale).stroke({ color: 0x7b8ea8, width: 3.5 * scale });
+            chassis.rect(-45 * scale, 5 * scale, 14 * scale, 5 * scale).fill({ color: 0x2b3445 }).stroke({ color: 0xffb700, width: 1 });
+
+            // Main Superbike Fairing (Vibrant Orange & Cyan)
+            chassis.poly([
+                -30 * scale, -12 * scale,
+                -10 * scale, -12 * scale,
+                -2 * scale, -22 * scale,
+                18 * scale, -22 * scale,
+                40 * scale, -8 * scale,
+                34 * scale, 4 * scale,
+                10 * scale, 4 * scale,
+                -10 * scale, -2 * scale,
+                -25 * scale, -2 * scale
+            ]).fill({ color: 0xff8c00 });
+
+            // Cyber Decal stripes
+            chassis.poly([
+                -5 * scale, -18 * scale,
+                15 * scale, -18 * scale,
+                28 * scale, -7 * scale,
+                12 * scale, -5 * scale
+            ]).fill({ color: 0x00f0ff });
+
+            // Windshield
+            chassis.poly([
+                12 * scale, -22 * scale,
+                24 * scale, -30 * scale,
+                35 * scale, -14 * scale,
+                20 * scale, -16 * scale
+            ]).fill({ color: 0x070c14, alpha: 0.85 }).stroke({ color: 0x00f0ff, width: 1.5 });
+
+            // Headlight LED
+            chassis.poly([
+                38 * scale, -10 * scale,
+                42 * scale, -7 * scale,
+                38 * scale, -2 * scale
+            ]).fill({ color: 0x00f0ff });
+
+            // Rider Silhouette
+            chassis.poly([
+                -15 * scale, -14 * scale,
+                -4 * scale, -26 * scale,
+                8 * scale, -28 * scale,
+                18 * scale, -18 * scale,
+                10 * scale, -16 * scale,
+                -4 * scale, -14 * scale
+            ]).fill({ color: 0x101726 });
+
+            chassis.circle(12 * scale, -32 * scale, 7.5 * scale).fill({ color: 0xffb700 }).stroke({ color: 0xff3344, width: 1.5 });
+            chassis.poly([
+                14 * scale, -34 * scale,
+                19 * scale, -31 * scale,
+                17 * scale, -28 * scale,
+                12 * scale, -29 * scale
+            ]).fill({ color: 0x00f0ff });
+
+            chassis.rect(20 * scale, -20 * scale, 3 * scale, 6 * scale).fill({ color: 0x708090 });
+
+            bikeGroup.addChild(chassis);
+
+            // Dynamic Bike HUD Tag
+            const bikeLabel = new PIXI.Text({
+                text: 'SUPERBIKE',
+                style: {
+                    fontFamily: 'Orbitron',
+                    fontSize: 11,
+                    fontWeight: '900',
+                    fill: 0xffb700,
+                    dropShadow: { color: 0x000000, blur: 6 }
+                }
+            });
+            bikeLabel.anchor.set(0.5, 1);
+            bikeLabel.y = -50 * scale;
+            bikeLabel.name = 'bikeLabel';
+            bikeGroup.addChild(bikeLabel);
+
+            // Pointer/Drag Interactions
+            bikeGroup.eventMode = 'static';
+            bikeGroup.cursor = 'grab';
+
+            bikeGroup.on('pointerdown', (e) => {
+                initAudio();
+                state.isDraggingBike = true;
+                state.presetMode = 'none';
+                state.vBike = 0.0;
+                state.lastDragTime = performance.now();
+                state.lastPointerMoveTime = performance.now();
+                state.lastDragX = state.xBike;
+                bikeGroup.cursor = 'grabbing';
+                if (state.stopwatchAutoMode && !state.stopwatchRunning) {
+                    startStopwatch();
+                }
+            });
+        }
+
+        // Helper to create rotating neon alloy wheels
+        function createWheelGraphics(scale) {
+            const wheel = new PIXI.Container();
+            const g = new PIXI.Graphics();
+
+            g.circle(0, 0, 15 * scale).stroke({ color: 0x0c0f17, width: 5 * scale });
+            g.circle(0, 0, 16.5 * scale).stroke({ color: 0x222a3b, width: 1.5 * scale });
+            g.circle(0, 0, 9 * scale).fill({ color: 0x1b2333 }).stroke({ color: 0x5a6d96, width: 1 });
+
+            for (let a = 0; a < 5; a++) {
+                const angle = (a * 2 * Math.PI) / 5;
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                g.moveTo(0, 0).lineTo(cos * 13 * scale, sin * 13 * scale).stroke({ color: 0x00f0ff, width: 2 * scale });
+            }
+
+            g.circle(0, 0, 3.5 * scale).fill({ color: 0xffb700 });
+            wheel.addChild(g);
+            return wheel;
+        }
+
+        // Window pointer handlers for continuous, smooth drag & velocity extraction
+        window.addEventListener('pointermove', (e) => {
+            if (!app || !app.canvas) return;
+            const rect = app.canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const now = performance.now();
+
+            if (state.isDraggingRef) {
+                const newM = Math.round(pxToMetersExact(mouseX) * 2) / 2;
+                state.xRef = newM;
+                refSlider.value = newM;
+                refValText.innerText = (newM >= 0 ? `+${newM.toFixed(1)}` : `${newM.toFixed(1)}`) + 'm';
+                updateDashboard();
+                updatePositions();
+            } else if (state.isDraggingBike) {
+                const newM = Math.max(MIN_X, Math.min(MAX_X, pxToMetersExact(mouseX)));
+                const dt = (now - state.lastDragTime) / 1000;
+
+                if (dt > 0.012) {
+                    const dx = newM - state.lastDragX;
+                    const instantV = dx / dt;
+
+                    // Exponential moving average for smooth instantaneous speed response
+                    state.vBike = state.vBike * 0.3 + instantV * 0.7;
+
+                    const deltaDist = Math.abs(dx);
+                    state.totalDistance += deltaDist;
+
+                    state.lastDragTime = now;
+                    state.lastDragX = newM;
+                }
+
+                state.lastPointerMoveTime = now;
+                state.xBike = newM;
+                updateDashboard();
+                updatePositions();
+            }
+        });
+
+        function stopDragging() {
+            if (state.isDraggingBike) {
+                state.isDraggingBike = false;
+                state.vBike = 0.0;
+                state.smoothedSpeed = 0.0;
+                if (bikeGroup) bikeGroup.cursor = 'grab';
+                updateDashboard();
+                updatePositions();
+            }
+            if (state.isDraggingRef) {
+                state.isDraggingRef = false;
+                if (refGroup) refGroup.alpha = 1.0;
+            }
+        }
+
+        window.addEventListener('pointerup', stopDragging);
+        window.addEventListener('pointercancel', stopDragging);
+
+        // Update positions & animations of objects on Pixi Canvas
+        function updatePositions() {
+            if (!app) return;
+            const h = app.renderer.height;
+            const roadY = h / 2 + 25;
+
+            // Reference Marker position
+            const refPx = metersToPx(state.xRef);
+            refGroup.x = refPx;
+            refGroup.y = roadY;
+
+            // Superbike position
+            const bikePx = metersToPx(state.xBike);
+            bikeGroup.x = bikePx;
+            bikeGroup.y = roadY - 14;
+
+            // Wheel rotation animation proportional to movement
+            const speed = Math.abs(state.vBike);
+            if (wheelFront && wheelRear && speed > 0.1) {
+                const rotSpeed = state.vBike * 0.15;
+                wheelFront.rotation += rotSpeed;
+                wheelRear.rotation += rotSpeed;
+            }
+
+            // Exhaust fire visibility depending on speed
+            if (exhaustGlow) {
+                exhaustGlow.alpha = speed > 5 ? Math.min(1.0, speed / 20) : 0.0;
+            }
+
+            // Headlight intensity
+            if (headlightGlow) {
+                headlightGlow.alpha = 0.2 + Math.min(0.4, speed / 30);
+            }
+
+            // Update Bike text banner
+            const bikeLabel = bikeGroup.getChildByName('bikeLabel');
+            if (bikeLabel) {
+                const spdText = speed.toFixed(1);
+                bikeLabel.text = `BIKE (x = ${state.xBike >= 0 ? '+' : ''}${state.xBike.toFixed(1)}m | ${spdText} m/s)`;
+            }
+        }
+
+        // ==========================================
+        // 4. ANALOG SPEEDOMETER DIAL (CANVAS)
+        // ==========================================
+        const speedoCanvas = document.getElementById('speedometer-canvas');
+        const speedoCtx = speedoCanvas.getContext('2d');
+
+        function initAnalogSpeedometer() {
+            drawAnalogSpeedometer(0);
+        }
+
+        function drawAnalogSpeedometer(currentSpeed) {
+            const ctx = speedoCtx;
+            const w = speedoCanvas.width;
+            const h = speedoCanvas.height;
+            const cx = w / 2;
+            const cy = h - 15;
+            const radius = 105;
+
+            ctx.clearRect(0, 0, w, h);
+
+            const startAngle = Math.PI * 0.85;
+            const endAngle = Math.PI * 2.15;
+            const totalAngle = endAngle - startAngle;
+            const maxSpeedScale = 40; // 0 to 40 m/s scale (approx 144 km/h)
+
+            // Outer dial track
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, startAngle, endAngle);
+            ctx.lineWidth = 14;
+            ctx.strokeStyle = '#141c2c';
+            ctx.stroke();
+
+            // Color Speed Arcs
+            drawArcSegment(ctx, cx, cy, radius, startAngle, startAngle + totalAngle * (15 / maxSpeedScale), '#00ff88');
+            drawArcSegment(ctx, cx, cy, radius, startAngle + totalAngle * (15 / maxSpeedScale), startAngle + totalAngle * (28 / maxSpeedScale), '#ffb700');
+            drawArcSegment(ctx, cx, cy, radius, startAngle + totalAngle * (28 / maxSpeedScale), endAngle, '#ff0077');
+
+            // Dial Ticks & Labels
+            for (let s = 0; s <= maxSpeedScale; s += 5) {
+                const fraction = s / maxSpeedScale;
+                const angle = startAngle + fraction * totalAngle;
+                const isMajor = (s % 10 === 0);
+
+                const innerR = radius - (isMajor ? 18 : 12);
+                const outerR = radius - 7;
+
+                const x1 = cx + Math.cos(angle) * innerR;
+                const y1 = cy + Math.sin(angle) * innerR;
+                const x2 = cx + Math.cos(angle) * outerR;
+                const y2 = cy + Math.sin(angle) * outerR;
+
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.lineWidth = isMajor ? 2.5 : 1.2;
+                ctx.strokeStyle = isMajor ? '#e2e8f0' : '#4a5d80';
+                ctx.stroke();
+
+                if (isMajor) {
+                    const textR = radius - 28;
+                    const tx = cx + Math.cos(angle) * textR;
+                    const ty = cy + Math.sin(angle) * textR;
+
+                    ctx.font = 'bold 10px Orbitron';
+                    ctx.fillStyle = '#8494ab';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(s, tx, ty);
+                }
+            }
+
+            // Dial Needle
+            const clampedSpeed = Math.max(0, Math.min(maxSpeedScale, currentSpeed));
+            const needleAngle = startAngle + (clampedSpeed / maxSpeedScale) * totalAngle;
+
+            ctx.save();
+            ctx.shadowColor = '#00f0ff';
+            ctx.shadowBlur = 12;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            const needleLen = radius - 16;
+            ctx.lineTo(cx + Math.cos(needleAngle) * needleLen, cy + Math.sin(needleAngle) * needleLen);
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = '#00f0ff';
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            ctx.restore();
+
+            // Center Cap
+            ctx.beginPath();
+            ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+            ctx.fillStyle = '#171f30';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#00f0ff';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#00f0ff';
+            ctx.fill();
+        }
+
+        function drawArcSegment(ctx, cx, cy, r, startA, endA, color) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, startA, endA);
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = color;
+            ctx.stroke();
+        }
+
+        // ==========================================
+        // 5. STOPWATCH FUNCTIONALITY
+        // ==========================================
+        function startStopwatch() {
+            if (state.stopwatchRunning) return;
+            state.stopwatchRunning = true;
+
+            swStatusDot.classList.add('active');
+            swStatusText.innerText = 'TIMER RUNNING';
+            swStartBtn.className = 'btn btn-ctrl btn-amber';
+            swStartBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+        }
+
+        function pauseStopwatch() {
+            state.stopwatchRunning = false;
+            swStatusDot.classList.remove('active');
+            swStatusText.innerText = 'TIMER PAUSED';
+            swStartBtn.className = 'btn btn-ctrl btn-cyan';
+            swStartBtn.innerHTML = '<i class="fa-solid fa-play"></i> Resume';
+        }
+
+        function toggleStopwatch() {
+            if (state.stopwatchRunning) {
+                pauseStopwatch();
+            } else {
+                startStopwatch();
+            }
+        }
+
+        function resetStopwatch() {
+            pauseStopwatch();
+            state.elapsedSeconds = 0.0;
+            state.stationaryTime = 0.0;
+            updateStopwatchDisplay();
+            swStatusText.innerText = 'AUTO-START ON MOTION';
+            updateDashboard();
+        }
+
+        function updateStopwatchDisplay() {
+            const totalSec = state.elapsedSeconds;
+            const mins = Math.floor(totalSec / 60);
+            const secs = Math.floor(totalSec % 60);
+            const ms = Math.floor((totalSec % 1) * 100);
+
+            swMin.innerText = String(mins).padStart(2, '0');
+            swSec.innerText = String(secs).padStart(2, '0');
+            swMs.innerText = String(ms).padStart(2, '0');
+        }
+
+        // ==========================================
+        // 6. DASHBOARD & FORMULA UPDATES
+        // ==========================================
+        function updateDashboard() {
+            let rawSpeed = Math.abs(state.vBike);
+            
+            // Clean deadband filter: if below 0.08 m/s, strictly 0
+            if (rawSpeed < 0.08) {
+                rawSpeed = 0.0;
+                state.vBike = 0.0;
+            }
+
+            // Smooth speed needle response
+            state.smoothedSpeed += (rawSpeed - state.smoothedSpeed) * 0.35;
+            if (state.smoothedSpeed < 0.05) {
+                state.smoothedSpeed = 0.0;
+            }
+
+            // 1. Instantaneous Speed values
+            const spdText = rawSpeed.toFixed(1);
+            instantSpeedVal.innerText = spdText;
+
+            // Convert to km/h (1 m/s = 3.6 km/h)
+            const kmhVal = (rawSpeed * 3.6).toFixed(1);
+            kmhSpeedVal.innerText = `${kmhVal} km/h`;
+
+            // Speed tier badge update
+            if (rawSpeed < 0.2) {
+                speedTierBadge.className = 'speed-tier-badge tier-idle';
+                speedTierBadge.innerText = 'IDLE (0 m/s)';
+            } else if (rawSpeed <= 12) {
+                speedTierBadge.className = 'speed-tier-badge tier-slow';
+                speedTierBadge.innerText = 'SLOW / CITY';
+            } else if (rawSpeed <= 22) {
+                speedTierBadge.className = 'speed-tier-badge tier-cruising';
+                speedTierBadge.innerText = 'CRUISING';
+            } else if (rawSpeed <= 30) {
+                speedTierBadge.className = 'speed-tier-badge tier-fast';
+                speedTierBadge.innerText = 'HIGH SPEED';
+            } else {
+                speedTierBadge.className = 'speed-tier-badge tier-hyper';
+                speedTierBadge.innerText = 'EXTREME NITRO';
+            }
+
+            // Draw speedometer gauge
+            drawAnalogSpeedometer(state.smoothedSpeed);
+
+            // Update Audio pitch
+            updateAudioEngine(state.smoothedSpeed);
+
+            // 2. Rolling Odometer Display
+            const distStr = state.totalDistance.toFixed(1).padStart(6, '0');
+            const digits = distStr.replace('.', '');
+            const boxes = odometerDigits.querySelectorAll('.digit-box');
+            if (boxes.length === 5) {
+                for (let i = 0; i < 5; i++) {
+                    boxes[i].innerText = digits[i];
+                }
+            }
+
+            // Distance from Ref Point
+            const relDist = state.xBike - state.xRef;
+            dispFromRef.innerText = (relDist >= 0 ? `+${relDist.toFixed(1)}` : `${relDist.toFixed(1)}`) + ' m';
+
+            // 3. Average Speed Calculation
+            const t = state.elapsedSeconds;
+            let avgSpeed = 0.0;
+            if (t > 0.2) {
+                avgSpeed = state.totalDistance / t;
+            }
+            avgSpeedBadge.innerText = `Avg Speed: ${avgSpeed.toFixed(1)} m/s`;
+
+            // 4. Live Formula math card
+            calcInstantResult.innerText = `${spdText} m/s (${kmhVal} km/h)`;
+            calcTotalDist.innerText = `${state.totalDistance.toFixed(1)} m`;
+            calcTotalTime.innerText = `${t.toFixed(1)} s`;
+            calcAvgResult.innerText = `${avgSpeed.toFixed(1)} m/s`;
+        }
+
+        // ==========================================
+        // 7. CHART.JS 4 LIVE GRAPH INTEGRATION
+        // ==========================================
+        function initChart() {
+            const ctx = document.getElementById('motion-chart').getContext('2d');
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Distance s (m)',
+                            data: [],
+                            borderColor: '#ffb700',
+                            borderWidth: 2.5,
+                            backgroundColor: 'rgba(255, 183, 0, 0.1)',
+                            fill: true,
+                            tension: 0.2,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Time t (s)', color: '#8494ab', font: { family: 'Inter', size: 11 } },
+                            grid: { color: '#1a2236' },
+                            ticks: { color: '#8494ab' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Distance s (m)', color: '#8494ab', font: { family: 'Inter', size: 11 } },
+                            grid: { color: '#1a2236' },
+                            ticks: { color: '#8494ab' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0', font: { family: 'Inter' } } }
+                    }
+                }
+            });
+        }
+
+        function recordGraphSample() {
+            const tStr = state.elapsedSeconds.toFixed(1);
+            const rawSpeed = Math.abs(state.vBike);
+
+            historyData.times.push(tStr);
+            historyData.distances.push(state.totalDistance);
+            historyData.speeds.push(rawSpeed);
+
+            if (historyData.times.length > MAX_HISTORY) {
+                historyData.times.shift();
+                historyData.distances.shift();
+                historyData.speeds.shift();
+            }
+
+            if (!chart) return;
+
+            chart.data.labels = historyData.times;
+            if (state.activeGraph === 'st') {
+                chart.data.datasets[0].label = 'Distance Traveled s (m)';
+                chart.data.datasets[0].borderColor = '#ffb700';
+                chart.data.datasets[0].backgroundColor = 'rgba(255, 183, 0, 0.1)';
+                chart.data.datasets[0].data = historyData.distances;
+                chart.options.scales.y.title.text = 'Total Distance s (m)';
+            } else {
+                chart.data.datasets[0].label = 'Instantaneous Speed v (m/s)';
+                chart.data.datasets[0].borderColor = '#00ff88';
+                chart.data.datasets[0].backgroundColor = 'rgba(0, 255, 136, 0.1)';
+                chart.data.datasets[0].data = historyData.speeds;
+                chart.options.scales.y.title.text = 'Speed v (m/s)';
+            }
+            chart.update('none');
+        }
+
+        function switchGraph(type) {
+            state.activeGraph = type;
+            document.getElementById('tab-st').classList.toggle('active', type === 'st');
+            document.getElementById('tab-vt').classList.toggle('active', type === 'vt');
+            recordGraphSample();
+        }
+
+        // ==========================================
+        // 8. SIMULATION LOOP & PHYSICS MOTION
+        // ==========================================
+        let lastFrameTimestamp = 0;
+        let graphSampleTimer = 0;
+
+        function startSimLoop() {
+            function loop(timestamp) {
+                if (!lastFrameTimestamp) lastFrameTimestamp = timestamp;
+                const dt = Math.min((timestamp - lastFrameTimestamp) / 1000, 0.1);
+                lastFrameTimestamp = timestamp;
+                const now = performance.now();
+
+                // 1. Check if dragging bike is stationary (mouse resting while button held)
+                if (state.isDraggingBike) {
+                    const dragIdleTime = now - state.lastPointerMoveTime;
+                    if (dragIdleTime > 60) {
+                        // Mouse is held still, rapidly decay velocity to zero
+                        state.vBike *= 0.6;
+                        if (Math.abs(state.vBike) < 0.08) {
+                            state.vBike = 0.0;
+                        }
+                    }
+                }
+
+                // 2. Advance Stopwatch if active
+                if (state.stopwatchRunning) {
+                    state.elapsedSeconds += dt;
+                    updateStopwatchDisplay();
+                }
+
+                // 3. Handle Automated Motion Presets
+                if (state.presetMode !== 'none' && !state.isDraggingBike) {
+                    state.presetTimer += dt;
+
+                    if (state.presetMode === 'uniform-10') {
+                        state.vBike = 10.0;
+                    } else if (state.presetMode === 'uniform-20') {
+                        state.vBike = 20.0;
+                    } else if (state.presetMode === 'accel') {
+                        state.vBike = Math.min(32.0, 2.0 + state.accelRate * state.presetTimer);
+                    } else if (state.presetMode === 'traffic') {
+                        const cycle = state.presetTimer % 8;
+                        if (cycle < 3) state.vBike = 15;
+                        else if (cycle < 5) state.vBike = 0;
+                        else state.vBike = 22;
+                    }
+
+                    if (!state.stopwatchRunning) startStopwatch();
+                }
+
+                // 4. Update Bike Position when velocity is active (for non-drag driving)
+                if (state.vBike !== 0 && !state.isDraggingBike) {
+                    const dx = state.vBike * dt;
+                    let nextX = state.xBike + dx;
+
+                    // Bounce at track boundaries
+                    if (nextX > MAX_X) {
+                        nextX = MAX_X;
+                        state.vBike = -state.vBike;
+                        throttleSlider.value = state.vBike;
+                    } else if (nextX < MIN_X) {
+                        nextX = MIN_X;
+                        state.vBike = -state.vBike;
+                        throttleSlider.value = state.vBike;
+                    }
+
+                    state.totalDistance += Math.abs(nextX - state.xBike);
+                    state.xBike = nextX;
+
+                    if (!state.stopwatchRunning && state.stopwatchAutoMode && Math.abs(state.vBike) > 0.5) {
+                        startStopwatch();
+                    }
+                }
+
+                updateDashboard();
+                updatePositions();
+
+                // 5. Record Graph Sample every 0.15s
+                graphSampleTimer += dt;
+                if (graphSampleTimer >= 0.15) {
+                    graphSampleTimer = 0;
+                    recordGraphSample();
+                }
+
+                requestAnimationFrame(loop);
+            }
+            requestAnimationFrame(loop);
+        }
+
+        // ==========================================
+        // 9. CONTROLS & EVENT LISTENERS
+        // ==========================================
+        function setupEventListeners() {
+            // Throttle slider
+            throttleSlider.addEventListener('input', (e) => {
+                initAudio();
+                const val = parseFloat(e.target.value);
+                state.presetMode = 'none';
+                state.vBike = val;
+                throttleValText.innerText = `${val >= 0 ? '+' : ''}${val.toFixed(1)} m/s`;
+                if (val !== 0 && !state.stopwatchRunning) startStopwatch();
+                updateDashboard();
+            });
+
+            // Ref slider
+            refSlider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                state.xRef = val;
+                refValText.innerText = `${val >= 0 ? '+' : ''}${val.toFixed(1)}m`;
+                updateDashboard();
+                updatePositions();
+            });
+
+            // Keyboard Arrow key controls
+            window.addEventListener('keydown', (e) => {
+                initAudio();
+                if (e.key === 'ArrowRight') {
+                    state.presetMode = 'none';
+                    state.vBike = Math.min(35, state.vBike + 2.5);
+                    throttleSlider.value = state.vBike;
+                    throttleValText.innerText = `${state.vBike.toFixed(1)} m/s`;
+                    if (!state.stopwatchRunning) startStopwatch();
+                } else if (e.key === 'ArrowLeft') {
+                    state.presetMode = 'none';
+                    state.vBike = Math.max(-35, state.vBike - 2.5);
+                    throttleSlider.value = state.vBike;
+                    throttleValText.innerText = `${state.vBike.toFixed(1)} m/s`;
+                    if (!state.stopwatchRunning) startStopwatch();
+                } else if (e.key === ' ' || e.key === 'Spacebar') {
+                    state.presetMode = 'none';
+                    state.vBike = 0.0;
+                    state.smoothedSpeed = 0.0;
+                    throttleSlider.value = 0;
+                    throttleValText.innerText = '0.0 m/s';
+                    updateDashboard();
+                }
+            });
+        }
+
+        function setPresetMode(mode) {
+            initAudio();
+            if (state.presetMode === mode) {
+                state.presetMode = 'none';
+                state.vBike = 0.0;
+                state.smoothedSpeed = 0.0;
+            } else {
+                state.presetMode = mode;
+                state.presetTimer = 0.0;
+                if (!state.stopwatchRunning) startStopwatch();
+            }
+            throttleSlider.value = state.vBike;
+            throttleValText.innerText = `${state.vBike.toFixed(1)} m/s`;
+            updateDashboard();
+        }
+
+        function snapRefToBike() {
+            const snappedX = Math.round(state.xBike * 2) / 2;
+            state.xRef = snappedX;
+            refSlider.value = snappedX;
+            refValText.innerText = `${snappedX >= 0 ? '+' : ''}${snappedX.toFixed(1)}m`;
+            updateDashboard();
+            updatePositions();
+        }
+
+        function resetSimulation() {
+            state.xBike = -30.0;
+            state.xRef = -30.0;
+            state.vBike = 0.0;
+            state.smoothedSpeed = 0.0;
+            state.totalDistance = 0.0;
+            state.presetMode = 'none';
+            state.presetTimer = 0.0;
+
+            throttleSlider.value = 0;
+            throttleValText.innerText = '0.0 m/s';
+            refSlider.value = -30;
+            refValText.innerText = '-30.0m';
+
+            resetStopwatch();
+
+            historyData.times = [];
+            historyData.distances = [];
+            historyData.speeds = [];
+
+            if (chart) {
+                chart.data.labels = [];
+                chart.data.datasets[0].data = [];
+                chart.update();
+            }
+
+            updateDashboard();
+            updatePositions();
+        }
+
+        function toggleInfoModal() {
+            const modal = document.getElementById('info-modal');
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+    </script>
+</body>
+</html>
