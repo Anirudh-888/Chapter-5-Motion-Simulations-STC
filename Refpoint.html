@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reference Point, Distance & Displacement Simulation | Class 9 Physics</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Chart.js v4 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- PixiJS v8 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.6.6/pixi.min.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #090b10;
+            --panel-bg: #121622;
+            --panel-border: #23293e;
+            --panel-header: #181d2d;
+            --accent-cyan: #00f0ff;
+            --accent-magenta: #ff0077;
+            --accent-amber: #ffb700;
+            --accent-green: #00ff88;
+            --text-main: #e2e8f0;
+            --text-muted: #8b9bb4;
+            --font-main: 'Inter', sans-serif;
+            --font-digital: 'Orbitron', monospace;
+            --font-mono: 'Share Tech Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* HEADER & DASHBOARD TOP BAR */
+        header {
+            background: linear-gradient(180deg, #161b2b 0%, #0d101a 100%);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-title i {
+            font-size: 26px;
+            color: var(--accent-cyan);
+            filter: drop-shadow(0 0 8px var(--accent-cyan));
+        }
+
+        .header-title h1 {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(90deg, #ffffff, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            background: #1e2436;
+            color: var(--text-main);
+            border: 1px solid var(--panel-border);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: var(--font-main);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #283048;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(0,240,255,0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-cyan {
+            background: rgba(0, 240, 255, 0.15);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+        .btn-cyan:hover {
+            background: rgba(0, 240, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0,240,255,0.4);
+        }
+
+        .btn-reset {
+            background: rgba(255, 0, 119, 0.15);
+            border-color: var(--accent-magenta);
+            color: var(--accent-magenta);
+        }
+        .btn-reset:hover {
+            background: rgba(255, 0, 119, 0.3);
+            box-shadow: 0 0 15px rgba(255, 0, 119, 0.4);
+        }
+
+        /* MAIN APP GRID */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            gap: 16px;
+            padding: 16px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* CANVAS CONTAINER (TRACK) */
+        .track-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title i {
+            color: var(--accent-cyan);
+        }
+
+        .track-legend {
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        #pixi-container {
+            width: 100%;
+            height: 240px;
+            background: #080a11;
+            border-radius: 8px;
+            border: 1px solid #1a2030;
+            overflow: hidden;
+            position: relative;
+            cursor: default;
+        }
+
+        /* ODOMETER & DASHBOARD GAUGES PANEL */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.2fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dashboard-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            background: linear-gradient(145deg, #141826 0%, #0e111b 100%);
+        }
+
+        /* ODOMETER ROLLING DISPLAY */
+        .odometer-display-container {
+            background: #06080e;
+            border: 2px solid #1a2236;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 10px 0;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.8), 0 0 10px rgba(255, 183, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .odometer-digits {
+            display: flex;
+            gap: 4px;
+            font-family: var(--font-digital);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent-amber);
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 183, 0, 0.5);
+        }
+
+        .digit-box {
+            background: linear-gradient(180deg, #181d2b 0%, #0b0e17 100%);
+            border: 1px solid #2a334c;
+            padding: 4px 8px;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 3px rgba(255,255,255,0.1);
+        }
+
+        .unit-tag {
+            font-family: var(--font-mono);
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+
+        /* DISPLACEMENT LED DISPLAY */
+        .displacement-display-container {
+            background: #05070d;
+            border: 2px solid #1c2638;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.9);
+        }
+
+        .displacement-value {
+            font-family: var(--font-digital);
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
+            letter-spacing: 1px;
+        }
+
+        .displacement-value.negative {
+            color: var(--accent-magenta);
+            text-shadow: 0 0 15px rgba(255, 0, 119, 0.6);
+        }
+
+        /* FORMULA MATH DISPLAY */
+        .formula-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px dashed var(--panel-border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text-main);
+            margin-top: 8px;
+        }
+
+        .formula-calc {
+            margin-top: 4px;
+            color: var(--accent-cyan);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        /* CONTROLS & DRIVE PANEL */
+        .controls-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .control-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            width: 110px;
+        }
+
+        .slider-custom {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: #1a2233;
+            outline: none;
+        }
+
+        .slider-custom::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--accent-cyan);
+            transition: transform 0.1s ease;
+        }
+
+        .slider-custom::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .preset-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 4px;
+        }
+
+        /* GRAPH & ANALYTICS PANEL */
+        .graph-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            min-height: 280px;
+        }
+
+        .graph-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            min-height: 220px;
+        }
+
+        /* EDUCATIONAL CONCEPT POPOVER */
+        .concept-banner {
+            background: linear-gradient(90deg, rgba(0,240,255,0.08) 0%, rgba(255,0,119,0.08) 100%);
+            border: 1px solid rgba(0,240,255,0.2);
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .concept-text i {
+            color: var(--accent-amber);
+            margin-right: 6px;
+        }
+
+        /* SPEEDOMETER NEEDLE GAUGE MINI */
+        .gauge-mini {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #080b13;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid #1a2234;
+        }
+
+        .speed-val {
+            font-family: var(--font-digital);
+            font-size: 20px;
+            color: var(--accent-green);
+        }
+
+        /* TOOLTIP ON CANVAS HELPER */
+        .canvas-hint {
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            background: rgba(10, 14, 23, 0.85);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-title">
+            <i class="fa-solid fa-gauge-high"></i>
+            <div>
+                <h1>REFERENCE POINT & DISPLACEMENT SIMULATOR</h1>
+                <div class="header-subtitle">Class 9 Physics • Chapter 5: Motion • Interactive Frame of Reference</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-cyan" id="btn-info" onclick="toggleInfoModal()">
+                <i class="fa-solid fa-lightbulb"></i> Concept Guide
+            </button>
+            <button class="btn btn-reset" id="btn-reset-all" onclick="resetSimulation()">
+                <i class="fa-solid fa-rotate-right"></i> Reset Odometer & Graph
+            </button>
+        </div>
+    </header>
+
+    <main>
+
+        <!-- CONCEPT BANNER -->
+        <div class="concept-banner">
+            <div class="concept-text">
+                <i class="fa-solid fa-circle-info"></i>
+                <strong>Key Physics Rule:</strong> Displacement $(\Delta x = x_{\text{car}} - x_{\text{ref}})$ depends on the chosen Reference Point ($R$). Moving the flag recalculates Displacement & Graph Origin, even if the Car stays still!
+            </div>
+            <div class="gauge-mini">
+                <span style="font-size: 11px; color: var(--text-muted);">SPEED:</span>
+                <span class="speed-val" id="speed-display">0.0 m/s</span>
+            </div>
+        </div>
+
+        <!-- TRACK CANVAS PANEL -->
+        <section class="track-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fa-solid fa-road"></i> Interactive Motion Track (-50 m to +50 m)
+                </div>
+                <div class="track-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--accent-magenta); box-shadow: 0 0 6px var(--accent-magenta);"></div>
+                        <span>Reference Point ($R$) [Draggable]</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--accent-cyan); box-shadow: 0 0 6px var(--accent-cyan);"></div>
+                        <span>Vehicle Character [Draggable]</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PIXI CANVAS -->
+            <div id="pixi-container">
+                <div class="canvas-hint">
+                    <i class="fa-solid fa-hand-pointer"></i> Drag Car or Reference Flag left / right
+                </div>
+            </div>
+        </section>
+
+        <!-- DASHBOARD & ODOMETER GRID -->
+        <section class="dashboard-grid">
+
+            <!-- ODOMETER 1: TOTAL DISTANCE -->
+            <div class="dashboard-card">
+                <div>
+                    <div class="panel-title" style="color: var(--accent-amber);">
+                        <i class="fa-solid fa-route"></i> ODOMETER 1: TOTAL DISTANCE
+                    </div>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                        Path Length Traveled ($D$). Direction independent; always increases or stays constant.
+                    </p>
+                </div>
+
+                <div class="odometer-display-container">
+                    <div class="odometer-digits" id="odometer-digits">
+                        <span class="digit-box">0</span>
+                        <span class="digit-box">0</span>
+                        <span class="digit-box">0</span>
+                        <span class="digit-box">0</span>
+                        <span style="align-self: flex-end; margin-bottom: 2px;">.</span>
+                        <span class="digit-box">0</span>
+                    </div>
+                    <span class="unit-tag">METERS</span>
+                </div>
+
+                <div class="formula-box">
+                    <div>Formula: $D = \int |v| dt$</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                        Note: Moving Reference Point does NOT change Total Distance!
+                    </div>
+                </div>
+            </div>
+
+            <!-- ODOMETER 2: DISPLACEMENT -->
+            <div class="dashboard-card">
+                <div>
+                    <div class="panel-title" style="color: var(--accent-cyan);">
+                        <i class="fa-solid fa-compass"></i> ODOMETER 2: DISPLACEMENT ($\Delta x$)
+                    </div>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                        Vector position relative to Reference Point ($R$). Has magnitude & sign ($+$ or $-$).
+                    </p>
+                </div>
+
+                <div class="displacement-display-container">
+                    <div class="displacement-value" id="displacement-display">
+                        +00.0 m
+                    </div>
+                    <div id="direction-badge" style="font-family: var(--font-mono); font-size: 12px; padding: 4px 8px; border-radius: 4px; background: rgba(0,240,255,0.1); color: var(--accent-cyan);">
+                        EAST / RIGHT
+                    </div>
+                </div>
+
+                <div class="formula-box">
+                    <div>Formula: $\text{Displacement } (\Delta x) = x_{\text{car}} - x_{\text{ref}}$</div>
+                    <div class="formula-calc" id="formula-live">
+                        $\Delta x = (+0.0) - (0.0) = \mathbf{0.0\text{ m}}$
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTROLS & PRESETS -->
+            <div class="dashboard-card controls-card">
+                <div class="panel-title">
+                    <i class="fa-solid fa-sliders"></i> CAR DRIVE & REFERENCE CONTROLS
+                </div>
+
+                <!-- Car Position Slider -->
+                <div class="control-row">
+                    <span class="control-label"><i class="fa-solid fa-car"></i> Car Pos ($x_{\text{car}}$):</span>
+                    <input type="range" min="-50" max="50" step="0.5" value="10" class="slider-custom" id="car-slider">
+                    <span style="font-family: var(--font-mono); width: 45px; text-align: right;" id="car-val-text">+10.0m</span>
+                </div>
+
+                <!-- Ref Point Slider -->
+                <div class="control-row">
+                    <span class="control-label" style="color: var(--accent-magenta);"><i class="fa-solid fa-flag"></i> Ref Point ($x_{\text{ref}}$):</span>
+                    <input type="range" min="-50" max="50" step="0.5" value="0" class="slider-custom" id="ref-slider" style="accent-color: var(--accent-magenta);">
+                    <span style="font-family: var(--font-mono); width: 45px; text-align: right; color: var(--accent-magenta);" id="ref-val-text">0.0m</span>
+                </div>
+
+                <!-- Auto Drive speed slider -->
+                <div class="control-row">
+                    <span class="control-label"><i class="fa-solid fa-tachometer-alt"></i> Auto Velocity:</span>
+                    <input type="range" min="-15" max="15" step="0.5" value="0" class="slider-custom" id="speed-slider">
+                    <span style="font-family: var(--font-mono); width: 45px; text-align: right;" id="speed-slider-text">0 m/s</span>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="preset-btns">
+                    <button class="btn btn-sm" onclick="setRefPreset(0)"><i class="fa-solid fa-location-dot"></i> $R = 0\text{m}$</button>
+                    <button class="btn btn-sm" onclick="setRefPreset(-30)"><i class="fa-solid fa-arrow-left"></i> $R = -30\text{m}$</button>
+                    <button class="btn btn-sm" onclick="setRefPreset(25)"><i class="fa-solid fa-arrow-right"></i> $R = +25\text{m}$</button>
+                    <button class="btn btn-sm btn-cyan" onclick="toggleDrivePattern('sine')"><i class="fa-solid fa-wave-square"></i> Sine Wave</button>
+                    <button class="btn btn-sm" onclick="toggleDrivePattern('bounce')"><i class="fa-solid fa-shuffle"></i> Bounce</button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- SYNCHRONIZED POSITION-TIME GRAPH -->
+        <section class="graph-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fa-solid fa-chart-line"></i> Synchronized Position-Time Graph ($x\text{-}t$)
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted);">
+                    Y-Axis Zero Line ($y = 0$) dynamically represents Reference Point $x_{\text{ref}}$
+                </div>
+            </div>
+
+            <div class="graph-container">
+                <canvas id="xt-chart"></canvas>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- INSTRUCTIONAL MODAL -->
+    <div id="info-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; max-width: 600px; width: 90%; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--panel-border); padding-bottom: 12px;">
+                <h3 style="font-size: 18px; color: var(--accent-cyan);"><i class="fa-solid fa-graduation-cap"></i> Understanding Reference Points & Frames</h3>
+                <button onclick="toggleInfoModal()" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="font-size: 13px; line-height: 1.6; color: var(--text-main); display: flex; flex-direction: column; gap: 12px;">
+                <p><strong>1. Reference Point (Origin $x_0$):</strong> Motion is relative! To describe the position of an object, we must choose a fixed point called the Reference Point.</p>
+                <p><strong>2. Total Distance ($D$):</strong> The total length of the path traveled by the car. Distance is a scalar quantity, always positive or zero ($D \ge 0$), and does NOT change when you move the reference flag!</p>
+                <p><strong>3. Displacement ($\Delta x$):</strong> The shortest vector distance from the reference point to the object ($\Delta x = x_{\text{car}} - x_{\text{ref}}$). It has magnitude and direction ($+$ or $-$).</p>
+                <p><strong>4. Try it out:</strong> Drag the pink Reference Flag $R$ left or right. Watch how the Displacement and Graph line shift instantly while the Total Distance odometer remains unchanged!</p>
+            </div>
+            <div style="margin-top: 20px; text-align: right;">
+                <button class="btn btn-cyan" onclick="toggleInfoModal()">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN SIMULATION LOGIC SCRIPT -->
+    <script>
+        // --- CONSTANTS & SIMULATION STATE ---
+        const MIN_X = -50;
+        const MAX_X = 50;
+        
+        let state = {
+            xCar: 10.0,       // Car absolute position in meters
+            xRef: 0.0,        // Reference point position in meters
+            vCar: 0.0,        // Car velocity in m/s
+            totalDistance: 0.0,
+            lastRecordedCarPos: 10.0,
+            pattern: 'none',   // 'none', 'sine', 'bounce'
+            simTime: 0.0,
+            isDraggingCar: false,
+            isDraggingRef: false
+        };
+
+        // Graph data history
+        const graphHistory = {
+            times: [],
+            carAbsolutePos: [], // store absolute xCar to re-calculate displacement live when xRef moves!
+            displacements: []
+        };
+        const MAX_GRAPH_POINTS = 150;
+
+        // UI Element References
+        const odometerDigits = document.getElementById('odometer-digits');
+        const displacementDisplay = document.getElementById('displacement-display');
+        const directionBadge = document.getElementById('direction-badge');
+        const formulaLive = document.getElementById('formula-live');
+        const speedDisplay = document.getElementById('speed-display');
+        
+        const carSlider = document.getElementById('car-slider');
+        const refSlider = document.getElementById('ref-slider');
+        const speedSlider = document.getElementById('speed-slider');
+        
+        const carValText = document.getElementById('car-val-text');
+        const refValText = document.getElementById('ref-val-text');
+        const speedSliderText = document.getElementById('speed-slider-text');
+
+        // PIXI & Chart variables
+        let app;
+        let chart;
+        let trackContainer, carSpriteGroup, refSpriteGroup, rulerGraphics;
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            await initPixi();
+            initChart();
+            setupEventListeners();
+            startSimLoop();
+        });
+
+        // --- PIXIJS 8 CANVAS SETUP ---
+        async function initPixi() {
+            const container = document.getElementById('pixi-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            app = new PIXI.Application();
+            await app.init({
+                width: width,
+                height: height,
+                backgroundColor: 0x080a11,
+                resolution: window.devicePixelRatio || 1,
+                autoDensity: true,
+                antialias: true
+            });
+
+            container.appendChild(app.canvas);
+
+            // Parent Stage container
+            trackContainer = new PIXI.Container();
+            app.stage.addChild(trackContainer);
+
+            // Graphics layers
+            rulerGraphics = new PIXI.Graphics();
+            refSpriteGroup = new PIXI.Container();
+            carSpriteGroup = new PIXI.Container();
+
+            trackContainer.addChild(rulerGraphics);
+            trackContainer.addChild(refSpriteGroup);
+            trackContainer.addChild(carSpriteGroup);
+
+            // Draw Static Road & Ruler
+            renderTrackVisuals(width, height);
+            
+            // Build Reference Flag Sprite Group
+            buildRefPointGraphics();
+            
+            // Build Car Sprite Group
+            buildCarGraphics();
+
+            // Resize listener
+            window.addEventListener('resize', handleResize);
+        }
+
+        function handleResize() {
+            if (!app) return;
+            const container = document.getElementById('pixi-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            app.renderer.resize(width, height);
+            renderTrackVisuals(width, height);
+            updatePositions();
+        }
+
+        // Coordinate transforms
+        function metersToPx(m) {
+            const width = app.renderer.width;
+            const margin = 50;
+            return margin + ((m - MIN_X) / (MAX_X - MIN_X)) * (width - 2 * margin);
+        }
+
+        function pxToMeters(px) {
+            const width = app.renderer.width;
+            const margin = 50;
+            const clampedPx = Math.max(margin, Math.min(width - margin, px));
+            const m = MIN_X + ((clampedPx - margin) / (width - 2 * margin)) * (MAX_X - MIN_X);
+            return Math.round(m * 2) / 2; // snap to 0.5m increments
+        }
+
+        // Render Road, Grid & Ruler
+        function renderTrackVisuals(w, h) {
+            const g = rulerGraphics;
+            g.clear();
+
+            const roadY = h / 2 + 10;
+            const margin = 50;
+
+            // Road surface
+            g.rect(0, roadY - 35, w, 70).fill({ color: 0x121724 });
+            // Road borders
+            g.rect(0, roadY - 35, w, 3).fill({ color: 0x2e3852 });
+            g.rect(0, roadY + 35, w, 3).fill({ color: 0x2e3852 });
+
+            // Center dashed line
+            for (let x = 0; x < w; x += 30) {
+                g.rect(x, roadY - 1, 15, 2).fill({ color: 0x3d4b6e, alpha: 0.6 });
+            }
+
+            // Ruler Base Line below road
+            const rulerY = roadY + 55;
+            g.moveTo(margin, rulerY).lineTo(w - margin, rulerY).stroke({ color: 0x4a5878, width: 2 });
+
+            // Remove existing text labels if any
+            rulerGraphics.children.forEach(c => c.destroy());
+
+            // Tick Marks & Numbers
+            for (let m = MIN_X; m <= MAX_X; m += 5) {
+                const px = metersToPx(m);
+                const isMajor = (m % 10 === 0);
+                const tickLen = isMajor ? 12 : 7;
+
+                // Tick line
+                g.moveTo(px, rulerY).lineTo(px, rulerY + tickLen).stroke({
+                    color: isMajor ? 0x00f0ff : 0x4a5878,
+                    width: isMajor ? 2 : 1
+                });
+
+                // Vertical grid lines behind road
+                g.moveTo(px, roadY - 45).lineTo(px, roadY + 45).stroke({
+                    color: m === 0 ? 0xffb700 : 0x1f273b,
+                    width: m === 0 ? 2 : 1,
+                    alpha: m === 0 ? 0.8 : 0.4
+                });
+
+                // Numeric Labels for major ticks
+                if (isMajor) {
+                    const labelText = new PIXI.Text({
+                        text: (m > 0 ? `+${m}` : `${m}`) + 'm',
+                        style: {
+                            fontFamily: 'Share Tech Mono',
+                            fontSize: 11,
+                            fill: m === 0 ? 0xffb700 : 0x8b9bb4,
+                            align: 'center'
+                        }
+                    });
+                    labelText.anchor.set(0.5, 0);
+                    labelText.x = px;
+                    labelText.y = rulerY + 14;
+                    rulerGraphics.addChild(labelText);
+                }
+            }
+        }
+
+        // --- REFERENCE POINT GRAPHICS & DRAG ---
+        function buildRefPointGraphics() {
+            refSpriteGroup.removeChildren();
+
+            const g = new PIXI.Graphics();
+            
+            // Flag pole
+            g.rect(-2, -65, 4, 65).fill({ color: 0xff0077 });
+            // Glowing Flag banner
+            g.poly([0, -65, 30, -50, 0, -35]).fill({ color: 0xff0077 });
+            // Flag symbol 'R'
+            // Base pin glow circle
+            g.circle(0, 0, 8).fill({ color: 0xff0077 });
+            g.circle(0, 0, 4).fill({ color: 0xffffff });
+
+            // Vertical Reference line stretching full canvas height
+            g.moveTo(0, -120).lineTo(0, 50).stroke({ color: 0xff0077, width: 2, alpha: 0.7 });
+
+            refSpriteGroup.addChild(g);
+
+            // Label
+            const refText = new PIXI.Text({
+                text: 'REF POINT (R)',
+                style: {
+                    fontFamily: 'Orbitron',
+                    fontSize: 10,
+                    fontWeight: '700',
+                    fill: 0xff0077,
+                    dropShadow: { color: 0x000000, blur: 4 }
+                }
+            });
+            refText.anchor.set(0.5, 1);
+            refText.y = -70;
+            refSpriteGroup.addChild(refText);
+
+            // Interaction
+            refSpriteGroup.eventMode = 'static';
+            refSpriteGroup.cursor = 'ew-resize';
+
+            refSpriteGroup.on('pointerdown', (e) => {
+                state.isDraggingRef = true;
+                refSpriteGroup.alpha = 0.8;
+            });
+        }
+
+        // --- CAR GRAPHICS & DRAG ---
+        function buildCarGraphics() {
+            carSpriteGroup.removeChildren();
+
+            const g = new PIXI.Graphics();
+
+            // Car Body (Sleek modern sports car outline)
+            // Main chassis gradient substitute
+            g.roundRect(-30, -18, 60, 24, 6).fill({ color: 0x00d2ff });
+            // Cabin / Roof
+            g.roundRect(-15, -28, 32, 14, 4).fill({ color: 0x09121f });
+            // Windshield
+            g.poly([ -12, -18, -6, -26, 12, -26, 15, -18 ]).fill({ color: 0x00f0ff, alpha: 0.6 });
+
+            // Headlights glow (Right facing)
+            g.poly([ 30, -12, 55, -20, 55, 0, 30, -6 ]).fill({ color: 0xffb700, alpha: 0.3 });
+            g.rect(28, -14, 3, 8).fill({ color: 0xffea00 });
+
+            // Tail lights
+            g.rect(-30, -14, 3, 8).fill({ color: 0xff0055 });
+
+            // Wheels
+            g.circle(-18, 6, 8).fill({ color: 0x05070a }).stroke({ color: 0x5a6988, width: 2 });
+            g.circle(-18, 6, 3).fill({ color: 0x00f0ff });
+
+            g.circle(18, 6, 8).fill({ color: 0x05070a }).stroke({ color: 0x5a6988, width: 2 });
+            g.circle(18, 6, 3).fill({ color: 0x00f0ff });
+
+            carSpriteGroup.addChild(g);
+
+            // Label tag above car
+            const carText = new PIXI.Text({
+                text: 'CAR',
+                style: {
+                    fontFamily: 'Orbitron',
+                    fontSize: 11,
+                    fontWeight: '700',
+                    fill: 0x00f0ff,
+                    dropShadow: { color: 0x000000, blur: 4 }
+                }
+            });
+            carText.anchor.set(0.5, 1);
+            carText.y = -34;
+            carText.name = 'carTextLabel';
+            carSpriteGroup.addChild(carText);
+
+            // Drag Interaction
+            carSpriteGroup.eventMode = 'static';
+            carSpriteGroup.cursor = 'grab';
+
+            carSpriteGroup.on('pointerdown', (e) => {
+                state.isDraggingCar = true;
+                carSpriteGroup.cursor = 'grabbing';
+            });
+        }
+
+        // Canvas Pointer Move listener on stage
+        window.addEventListener('pointermove', (e) => {
+            if (!app || !app.canvas) return;
+            const rect = app.canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+
+            if (state.isDraggingRef) {
+                const newM = pxToMeters(mouseX);
+                state.xRef = newM;
+                refSlider.value = newM;
+                refValText.innerText = (newM > 0 ? `+${newM}` : `${newM}`) + 'm';
+                updateDashboard();
+                recalculateGraphDisplacements();
+                updatePositions();
+            } else if (state.isDraggingCar) {
+                const newM = pxToMeters(mouseX);
+                const delta = Math.abs(newM - state.xCar);
+                state.totalDistance += delta;
+                state.xCar = newM;
+                carSlider.value = newM;
+                carValText.innerText = (newM > 0 ? `+${newM}` : `${newM}`) + 'm';
+                updateDashboard();
+                updatePositions();
+            }
+        });
+
+        window.addEventListener('pointerup', () => {
+            state.isDraggingRef = false;
+            state.isDraggingCar = false;
+            if (carSpriteGroup) carSpriteGroup.cursor = 'grab';
+            if (refSpriteGroup) refSpriteGroup.alpha = 1.0;
+        });
+
+        // Position Objects on Pixi Canvas
+        function updatePositions() {
+            if (!app) return;
+            const h = app.renderer.height;
+            const roadY = h / 2 + 10;
+
+            const refPx = metersToPx(state.xRef);
+            refSpriteGroup.x = refPx;
+            refSpriteGroup.y = roadY;
+
+            const carPx = metersToPx(state.xCar);
+            carSpriteGroup.x = carPx;
+            carSpriteGroup.y = roadY - 10;
+
+            const carText = carSpriteGroup.getChildByName('carTextLabel');
+            if (carText) {
+                const disp = (state.xCar - state.xRef).toFixed(1);
+                carText.text = `CAR (x = ${state.xCar > 0 ? '+' : ''}${state.xCar.toFixed(1)}m)`;
+            }
+        }
+
+        // --- DASHBOARD & ODOMETER UPDATES ---
+        function updateDashboard() {
+            // 1. Total Distance Rolling Odometer
+            const distStr = state.totalDistance.toFixed(1).padStart(6, '0'); // e.g. "0012.5"
+            const digits = distStr.replace('.', '');
+            
+            const boxes = odometerDigits.querySelectorAll('.digit-box');
+            if (boxes.length === 5) {
+                for (let i = 0; i < 5; i++) {
+                    boxes[i].innerText = digits[i];
+                }
+            }
+
+            // 2. Displacement Calculation
+            const disp = state.xCar - state.xRef;
+            const dispFormatted = (disp >= 0 ? `+${disp.toFixed(1)}` : `${disp.toFixed(1)}`) + ' m';
+            displacementDisplay.innerText = dispFormatted;
+
+            if (disp < 0) {
+                displacementDisplay.classList.add('negative');
+                directionBadge.innerText = 'WEST / LEFT';
+                directionBadge.style.color = 'var(--accent-magenta)';
+                directionBadge.style.background = 'rgba(255,0,119,0.1)';
+            } else {
+                displacementDisplay.classList.remove('negative');
+                directionBadge.innerText = disp === 0 ? 'AT ORIGIN' : 'EAST / RIGHT';
+                directionBadge.style.color = 'var(--accent-cyan)';
+                directionBadge.style.background = 'rgba(0,240,255,0.1)';
+            }
+
+            // 3. Formula Live Math Text
+            const xCarStr = (state.xCar >= 0 ? `+${state.xCar.toFixed(1)}` : `${state.xCar.toFixed(1)}`);
+            const xRefStr = (state.xRef >= 0 ? `+${state.xRef.toFixed(1)}` : `${state.xRef.toFixed(1)}`);
+            formulaLive.innerHTML = `$\Delta x = (${xCarStr}\\text{m}) - (${xRefStr}\\text{m}) = \\mathbf{${dispFormatted}}$`;
+
+            // Speed gauge
+            speedDisplay.innerText = `${Math.abs(state.vCar).toFixed(1)} m/s`;
+        }
+
+        // --- CHART.JS 4 LIVE GRAPH ---
+        function initChart() {
+            const ctx = document.getElementById('xt-chart').getContext('2d');
+            
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Displacement Δx (m)',
+                            data: [],
+                            borderColor: '#00f0ff',
+                            borderWidth: 3,
+                            backgroundColor: 'rgba(0, 240, 255, 0.08)',
+                            fill: true,
+                            tension: 0.2,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Time t (s)', color: '#8b9bb4', font: { family: 'Inter', size: 11 } },
+                            grid: { color: '#1e2436' },
+                            ticks: { color: '#8b9bb4' }
+                        },
+                        y: {
+                            min: -60,
+                            max: 60,
+                            title: { display: true, text: 'Displacement Δx = x_car - x_ref (m)', color: '#8b9bb4', font: { family: 'Inter', size: 11 } },
+                            grid: {
+                                color: (ctx) => (ctx.tick.value === 0 ? '#ff0077' : '#1e2436'),
+                                lineWidth: (ctx) => (ctx.tick.value === 0 ? 2 : 1)
+                            },
+                            ticks: { color: '#8b9bb4' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0', font: { family: 'Inter' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `Displacement: ${context.raw.toFixed(1)} m`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function recordGraphPoint() {
+            state.simTime += 0.2;
+            const tStr = state.simTime.toFixed(1);
+
+            graphHistory.times.push(tStr);
+            graphHistory.carAbsolutePos.push(state.xCar);
+            
+            const currentDisp = state.xCar - state.xRef;
+            graphHistory.displacements.push(currentDisp);
+
+            if (graphHistory.times.length > MAX_GRAPH_POINTS) {
+                graphHistory.times.shift();
+                graphHistory.carAbsolutePos.shift();
+                graphHistory.displacements.shift();
+            }
+
+            chart.data.labels = graphHistory.times;
+            chart.data.datasets[0].data = graphHistory.displacements;
+            chart.update('none');
+        }
+
+        // Re-calculate recorded displacements when xRef changes dynamically!
+        function recalculateGraphDisplacements() {
+            for (let i = 0; i < graphHistory.carAbsolutePos.length; i++) {
+                graphHistory.displacements[i] = graphHistory.carAbsolutePos[i] - state.xRef;
+            }
+            if (chart) {
+                chart.data.datasets[0].data = graphHistory.displacements;
+                chart.update('none');
+            }
+        }
+
+        // --- SIMULATION LOOP & AUTOMATION ---
+        let lastTimestamp = 0;
+        let graphTimer = 0;
+
+        function startSimLoop() {
+            function loop(timestamp) {
+                if (!lastTimestamp) lastTimestamp = timestamp;
+                const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
+                lastTimestamp = timestamp;
+
+                // Handle Motion Patterns
+                if (state.pattern === 'sine') {
+                    state.vCar = 15 * Math.cos(timestamp * 0.002);
+                } else if (state.pattern === 'bounce') {
+                    if (state.xCar >= 45) state.vCar = -Math.abs(state.vCar || 10);
+                    if (state.xCar <= -45) state.vCar = Math.abs(state.vCar || 10);
+                }
+
+                // Update Car Position if velocity != 0
+                if (state.vCar !== 0 && !state.isDraggingCar) {
+                    const dx = state.vCar * dt;
+                    let nextX = state.xCar + dx;
+
+                    if (nextX > MAX_X) { nextX = MAX_X; state.vCar = -state.vCar; }
+                    if (nextX < MIN_X) { nextX = MIN_X; state.vCar = -state.vCar; }
+
+                    state.totalDistance += Math.abs(nextX - state.xCar);
+                    state.xCar = nextX;
+
+                    carSlider.value = state.xCar;
+                    carValText.innerText = (state.xCar > 0 ? `+${state.xCar.toFixed(1)}` : `${state.xCar.toFixed(1)}`) + 'm';
+                    
+                    updateDashboard();
+                }
+
+                updatePositions();
+
+                // Record graph point every 0.2s
+                graphTimer += dt;
+                if (graphTimer >= 0.2) {
+                    graphTimer = 0;
+                    recordGraphPoint();
+                }
+
+                requestAnimationFrame(loop);
+            }
+            requestAnimationFrame(loop);
+        }
+
+        // --- UI EVENT LISTENERS & CONTROLS ---
+        function setupEventListeners() {
+            // Car slider
+            carSlider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                const delta = Math.abs(val - state.xCar);
+                state.totalDistance += delta;
+                state.xCar = val;
+                carValText.innerText = (val > 0 ? `+${val}` : `${val}`) + 'm';
+                updateDashboard();
+                updatePositions();
+            });
+
+            // Ref slider
+            refSlider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                state.xRef = val;
+                refValText.innerText = (val > 0 ? `+${val}` : `${val}`) + 'm';
+                updateDashboard();
+                recalculateGraphDisplacements();
+                updatePositions();
+            });
+
+            // Speed slider
+            speedSlider.addEventListener('input', (e) => {
+                state.pattern = 'none';
+                state.vCar = parseFloat(e.target.value);
+                speedSliderText.innerText = `${state.vCar} m/s`;
+            });
+
+            // Keyboard Arrow key controls
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    state.xCar = Math.min(MAX_X, state.xCar + 1);
+                    state.totalDistance += 1;
+                    carSlider.value = state.xCar;
+                    updateDashboard();
+                    updatePositions();
+                } else if (e.key === 'ArrowLeft') {
+                    state.xCar = Math.max(MIN_X, state.xCar - 1);
+                    state.totalDistance += 1;
+                    carSlider.value = state.xCar;
+                    updateDashboard();
+                    updatePositions();
+                }
+            });
+        }
+
+        // Preset helpers
+        function setRefPreset(val) {
+            state.xRef = val;
+            refSlider.value = val;
+            refValText.innerText = (val > 0 ? `+${val}` : `${val}`) + 'm';
+            updateDashboard();
+            recalculateGraphDisplacements();
+            updatePositions();
+        }
+
+        function toggleDrivePattern(patternType) {
+            if (state.pattern === patternType) {
+                state.pattern = 'none';
+                state.vCar = 0;
+            } else {
+                state.pattern = patternType;
+                if (patternType === 'bounce' && state.vCar === 0) state.vCar = 10;
+            }
+            speedSlider.value = state.vCar;
+            speedSliderText.innerText = `${state.vCar.toFixed(0)} m/s`;
+        }
+
+        function resetSimulation() {
+            state.xCar = 10.0;
+            state.xRef = 0.0;
+            state.vCar = 0.0;
+            state.totalDistance = 0.0;
+            state.pattern = 'none';
+            state.simTime = 0.0;
+
+            carSlider.value = 10;
+            refSlider.value = 0;
+            speedSlider.value = 0;
+
+            carValText.innerText = '+10.0m';
+            refValText.innerText = '0.0m';
+            speedSliderText.innerText = '0 m/s';
+
+            graphHistory.times = [];
+            graphHistory.carAbsolutePos = [];
+            graphHistory.displacements = [];
+
+            if (chart) {
+                chart.data.labels = [];
+                chart.data.datasets[0].data = [];
+                chart.update();
+            }
+
+            updateDashboard();
+            updatePositions();
+        }
+
+        function toggleInfoModal() {
+            const modal = document.getElementById('info-modal');
+            modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+        }
+    </script>
+</body>
+</html>
