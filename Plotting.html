@@ -1,0 +1,2964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motion Graph Plotter & Physics Analyzer | Class 9 Physics</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;600;700;900&family=Share+Tech+Mono&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #090b10;
+            --panel-bg: #111522;
+            --panel-bg-elevated: #181d2d;
+            --panel-border: #232a3e;
+            --panel-border-glow: rgba(0, 240, 255, 0.3);
+            
+            --accent-cyan: #00f0ff;
+            --accent-blue: #3b82f6;
+            --accent-magenta: #ff0077;
+            --accent-amber: #ffb700;
+            --accent-green: #00ff88;
+            --accent-purple: #a855f7;
+            
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-digital: 'Orbitron', monospace;
+            --font-mono: 'Share Tech Mono', 'Fira Code', monospace;
+            
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(180deg, #151a2a 0%, #0c0f18 100%);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 50;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(0,240,255,0.2), rgba(255,0,119,0.2));
+            border: 1px solid var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-cyan);
+            font-size: 20px;
+            box-shadow: 0 0 15px rgba(0,240,255,0.25);
+        }
+
+        .brand-text h1 {
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(90deg, #ffffff 0%, var(--accent-cyan) 60%, #80e5ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-text h1 .badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: rgba(0, 240, 255, 0.15);
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            font-family: var(--font-digital);
+            -webkit-text-fill-color: var(--accent-cyan);
+            letter-spacing: 0.5px;
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: var(--panel-bg-elevated);
+            color: var(--text-main);
+            border: 1px solid var(--panel-border);
+            padding: 7px 14px;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-main);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .btn:hover {
+            background: #242c44;
+            border-color: var(--accent-cyan);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00b4d8, #0077b6);
+            border-color: var(--accent-cyan);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #00d0ff, #0096c7);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, #e11d48, #be123c);
+            border-color: var(--accent-magenta);
+            color: #fff;
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #059669, #10b981);
+            border-color: var(--accent-green);
+            color: #fff;
+        }
+
+        /* MAIN APP LAYOUT */
+        .app-layout {
+            display: grid;
+            grid-template-columns: 290px 1fr 340px;
+            flex: 1;
+            height: calc(100vh - 65px);
+            overflow: hidden;
+        }
+
+        /* SIDEBARS SHARED */
+        .sidebar {
+            background: var(--panel-bg);
+            border-color: var(--panel-border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #2a334d transparent;
+            z-index: 20;
+        }
+
+        .sidebar-left {
+            border-right: 1px solid var(--panel-border);
+        }
+
+        .sidebar-right {
+            border-left: 1px solid var(--panel-border);
+        }
+
+        .panel-section {
+            padding: 14px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .panel-section-title {
+            font-size: 11px;
+            font-family: var(--font-digital);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-cyan);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-section-title i {
+            font-size: 12px;
+        }
+
+        /* AXIS SELECTORS */
+        .axis-selector-group {
+            margin-bottom: 12px;
+        }
+
+        .axis-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .axis-label span.highlight {
+            color: var(--accent-cyan);
+            font-family: var(--font-mono);
+            font-weight: 700;
+        }
+
+        .quantity-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 5px;
+        }
+
+        .quantity-btn {
+            background: var(--panel-bg-elevated);
+            border: 1px solid var(--panel-border);
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .quantity-btn:hover {
+            border-color: var(--accent-cyan);
+            background: #1c2438;
+        }
+
+        .quantity-btn.active {
+            background: linear-gradient(90deg, rgba(0,240,255,0.15), rgba(0,240,255,0.05));
+            border-color: var(--accent-cyan);
+            color: #fff;
+            box-shadow: inset 2px 0 0 var(--accent-cyan);
+        }
+
+        .quantity-btn .q-symbol {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--accent-cyan);
+            background: rgba(0, 240, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .quantity-btn .q-unit {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        /* TOGGLES & CONTROLS */
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #232a3e;
+            transition: .3s;
+            border-radius: 20px;
+            border: 1px solid #374151;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+            background-color: #0b0f19;
+        }
+
+        /* GRAPH SHEET THEME TOGGLE */
+        .theme-pills {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .pill-btn {
+            background: var(--panel-bg-elevated);
+            border: 1px solid var(--panel-border);
+            padding: 7px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .pill-btn.active {
+            background: rgba(0, 240, 255, 0.15);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* CENTER WORKSPACE */
+        .center-workspace {
+            display: flex;
+            flex-direction: column;
+            background: #06080d;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* LIVE PHYSICAL OBJECT TRACK STRIP */
+        .simulation-track-strip {
+            background: #0d111d;
+            border-bottom: 1px solid var(--panel-border);
+            padding: 8px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 10;
+        }
+
+        .track-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+        }
+
+        .track-title {
+            font-family: var(--font-digital);
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .track-hud {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .track-hud span b {
+            color: #fff;
+            font-size: 12px;
+        }
+
+        .track-road-container {
+            position: relative;
+            height: 48px;
+            background: linear-gradient(180deg, #1e2436 0%, #131724 100%);
+            border-radius: var(--radius-sm);
+            border: 1px solid #2b354f;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        .track-finish-line {
+            position: absolute;
+            right: 20px;
+            top: 0;
+            bottom: 0;
+            width: 10px;
+            background: repeating-linear-gradient(
+                0deg,
+                #fff,
+                #fff 6px,
+                #000 6px,
+                #000 12px
+            );
+            opacity: 0.7;
+        }
+
+        .track-road-lines {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: repeating-linear-gradient(
+                90deg,
+                rgba(255,255,255,0.25),
+                rgba(255,255,255,0.25) 15px,
+                transparent 15px,
+                transparent 30px
+            );
+        }
+
+        .track-vehicle {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 26px;
+            transition: left 0.05s linear;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 2px 6px rgba(0,240,255,0.4));
+        }
+
+        .track-vehicle i {
+            font-size: 26px;
+            color: var(--accent-cyan);
+        }
+
+        .track-vehicle-exhaust {
+            position: absolute;
+            left: -8px;
+            width: 8px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-magenta);
+            opacity: 0;
+            filter: blur(2px);
+        }
+
+        /* GRAPH SHEET CONTAINER & CANVAS */
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #080b12;
+            cursor: crosshair;
+        }
+
+        canvas#graphCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* FLOATING HUD & ZOOM CONTROLS ON CANVAS */
+        .canvas-overlay-controls {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 5;
+        }
+
+        .canvas-icon-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            background: rgba(18, 22, 34, 0.85);
+            backdrop-filter: blur(6px);
+            border: 1px solid var(--panel-border);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 13px;
+        }
+
+        .canvas-icon-btn:hover {
+            background: #232b40;
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(0,240,255,0.25);
+        }
+
+        .canvas-coordinates-hud {
+            position: absolute;
+            bottom: 12px;
+            left: 14px;
+            background: rgba(15, 19, 30, 0.9);
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(8px);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .canvas-coordinates-hud span.val {
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        /* GRAPH BOTTOM CONTROLS */
+        .graph-bottom-bar {
+            background: #0e121e;
+            border-top: 1px solid var(--panel-border);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            z-index: 10;
+        }
+
+        .playback-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .time-slider-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            max-width: 480px;
+        }
+
+        .time-slider-wrapper span {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 5px;
+            background: #242c44;
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--accent-cyan);
+            border: 2px solid #fff;
+        }
+
+        /* RIGHT SIDEBAR: DATA & ANALYSIS */
+        .data-table-container {
+            max-height: 240px;
+            overflow-y: auto;
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-sm);
+            background: var(--panel-bg-elevated);
+            margin-bottom: 10px;
+            scrollbar-width: thin;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            text-align: left;
+        }
+
+        .data-table th {
+            position: sticky;
+            top: 0;
+            background: #1e2538;
+            padding: 7px 8px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--panel-border);
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 5px 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .data-table tr:hover {
+            background: rgba(0, 240, 255, 0.04);
+        }
+
+        .table-input {
+            width: 100%;
+            background: #111522;
+            border: 1px solid #28324a;
+            color: #fff;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .table-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 8px rgba(0,240,255,0.25);
+        }
+
+        .table-del-btn {
+            background: transparent;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            padding: 4px;
+            font-size: 13px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .table-del-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* ANALYSIS CARDS */
+        .analysis-card {
+            background: var(--panel-bg-elevated);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+            transition: var(--transition);
+        }
+
+        .analysis-card.slope-card {
+            border-left: 3px solid var(--accent-magenta);
+        }
+
+        .analysis-card.area-card {
+            border-left: 3px solid var(--accent-green);
+        }
+
+        .analysis-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .analysis-card-title {
+            font-family: var(--font-digital);
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .analysis-card.slope-card .analysis-card-title {
+            color: var(--accent-magenta);
+        }
+
+        .analysis-card.area-card .analysis-card-title {
+            color: var(--accent-green);
+        }
+
+        .physical-meaning-badge {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.3px;
+        }
+
+        .calculation-display {
+            background: #0d111c;
+            border: 1px solid #1f273b;
+            border-radius: var(--radius-sm);
+            padding: 8px 10px;
+            margin: 8px 0;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+
+        .calc-step {
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-size: 11px;
+        }
+
+        .calc-result-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px dashed #242e48;
+        }
+
+        .result-quantity {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .result-value-big {
+            font-family: var(--font-digital);
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .analysis-card.slope-card .result-value-big {
+            color: var(--accent-magenta);
+            text-shadow: 0 0 10px rgba(255, 0, 119, 0.4);
+        }
+
+        .analysis-card.area-card .result-value-big {
+            color: var(--accent-green);
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+        }
+
+        .ncert-tip-box {
+            font-size: 11px;
+            color: #cbd5e1;
+            line-height: 1.4;
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            margin-top: 8px;
+        }
+
+        .ncert-tip-box b {
+            color: var(--accent-cyan);
+        }
+
+        /* PRESET BUTTONS */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .preset-btn {
+            background: var(--panel-bg-elevated);
+            border: 1px solid var(--panel-border);
+            padding: 7px 8px;
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .preset-btn span.name {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--accent-cyan);
+            background: #1b2234;
+            color: #fff;
+        }
+
+        /* MODAL / POPUP FOR DERIVATIONS */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #111624;
+            border: 1px solid var(--panel-border-glow);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 650px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            overflow: hidden;
+            animation: modalIn 0.25s ease-out;
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 14px 20px;
+            background: #161c2d;
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-body {
+            padding: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-main);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .modal-close-btn:hover {
+            color: #fff;
+        }
+
+        .derivation-step {
+            background: #090c14;
+            border: 1px solid #1e263d;
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            margin: 10px 0;
+            font-family: var(--font-mono);
+        }
+
+        .derivation-step b {
+            color: var(--accent-cyan);
+            font-family: var(--font-main);
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 1100px) {
+            .app-layout {
+                grid-template-columns: 260px 1fr 300px;
+            }
+        }
+
+        @media (max-width: 850px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+                overflow: visible;
+            }
+            .center-workspace {
+                height: 550px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- APPLICATION HEADER -->
+    <header>
+        <div class="header-brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div class="brand-text">
+                <h1>Motion Graph Plotter & Physics Analyzer <span class="badge">CLASS 9 CBSE / STC</span></h1>
+                <div class="brand-subtitle">Chapter 5: Graphical Representation of Motion • Real-Time Slope & Area Engine</div>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button class="btn" id="btnDerivations" title="NCERT Equations of Motion Derivation from Graphs">
+                <i class="fa-solid fa-graduation-cap" style="color:var(--accent-amber)"></i> NCERT Derivations
+            </button>
+            <button class="btn btn-primary" id="btnResetView" title="Center origin & auto-fit graph">
+                <i class="fa-solid fa-arrows-to-eye"></i> Fit Graph
+            </button>
+            <button class="btn btn-accent" id="btnClearAll" title="Clear all points">
+                <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN 3-COLUMN APP LAYOUT -->
+    <main class="app-layout">
+
+        <!-- LEFT SIDEBAR: AXES, PRESETS & CONTROLS -->
+        <aside class="sidebar sidebar-left">
+            
+            <!-- X-AXIS SELECTION -->
+            <div class="panel-section">
+                <div class="panel-section-title">
+                    <span><i class="fa-solid fa-arrow-right-long"></i> X-Axis (Horizontal)</span>
+                    <span class="highlight" id="xAxisBadge">Time t (s)</span>
+                </div>
+                <div class="axis-selector-group">
+                    <div class="quantity-options" id="xAxisOptions">
+                        <button class="quantity-btn active" data-axis="x" data-qty="time">
+                            <span><i class="fa-regular fa-clock"></i> Time</span>
+                            <span class="q-symbol">t</span>
+                            <span class="q-unit">(s)</span>
+                        </button>
+                        <button class="quantity-btn" data-axis="x" data-qty="distance">
+                            <span><i class="fa-solid fa-route"></i> Distance</span>
+                            <span class="q-symbol">s</span>
+                            <span class="q-unit">(m)</span>
+                        </button>
+                        <button class="quantity-btn" data-axis="x" data-qty="displacement">
+                            <span><i class="fa-solid fa-arrows-left-right"></i> Displacement</span>
+                            <span class="q-symbol">x</span>
+                            <span class="q-unit">(m)</span>
+                        </button>
+                        <button class="quantity-btn" data-axis="x" data-qty="velocity">
+                            <span><i class="fa-solid fa-gauge-high"></i> Velocity</span>
+                            <span class="q-symbol">v</span>
+                            <span class="q-unit">(m/s)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Y-AXIS SELECTION -->
+            <div class="panel-section">
+                <div class="panel-section-title">
+                    <span><i class="fa-solid fa-arrow-up-long"></i> Y-Axis (Vertical)</span>
+                    <span class="highlight" id="yAxisBadge">Distance s (m)</span>
+                </div>
+                <div class="axis-selector-group">
+                    <div class="quantity-options" id="yAxisOptions">
+                        <button class="quantity-btn active" data-axis="y" data-qty="distance">
+                            <span><i class="fa-solid fa-route"></i> Distance</span>
+                            <span class="q-symbol">s</span>
+                            <span class="q-unit">(m)</span>
+                        </button>
+                        <button class="quantity-btn" data-axis="y" data-qty="displacement">
+                            <span><i class="fa-solid fa-arrows-left-right"></i> Displacement</span>
+                            <span class="q-symbol">x</span>
+                            <span class="q-unit">(m)</span>
+                        </button>
+                        <button class="quantity-btn" data-axis="y" data-qty="speed">
+                            <span><i class="fa-solid fa-gauge-simple"></i> Speed</span>
+                            <span class="q-symbol">v</span>
+                            <span class="q-unit">(m/s)</span>
+                        </button>
+                        <button class="quantity-btn" data-axis="y" data-qty="velocity">
+                            <span><i class="fa-solid fa-gauge-high"></i> Velocity</span>
+                            <span class="q-symbol">v</span>
+                            <span class="q-unit">(m/s)</span>
+                        </button>
+                        <button class="quantity-btn" data-axis="y" data-qty="acceleration">
+                            <span><i class="fa-solid fa-bolt"></i> Acceleration</span>
+                            <span class="q-symbol">a</span>
+                            <span class="q-unit">(m/s²)</span>
+                        </button>
+                        <button class="quantity-btn" data-axis="y" data-qty="time">
+                            <span><i class="fa-regular fa-clock"></i> Time</span>
+                            <span class="q-symbol">t</span>
+                            <span class="q-unit">(s)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRAPH SHEET APPEARANCE -->
+            <div class="panel-section">
+                <div class="panel-section-title">
+                    <span><i class="fa-solid fa-palette"></i> Graph Paper Sheet</span>
+                </div>
+                <div class="theme-pills">
+                    <button class="pill-btn active" id="btnThemeMillimeter">
+                        <i class="fa-solid fa-file-lines"></i> Millimeter Paper
+                    </button>
+                    <button class="pill-btn" id="btnThemeDarkLab">
+                        <i class="fa-solid fa-moon"></i> Cyber Lab
+                    </button>
+                </div>
+                <div class="theme-pills" style="margin-top:6px;">
+                    <button class="pill-btn" id="btnThemeBlueprint">
+                        <i class="fa-solid fa-drafting-compass"></i> Blueprint
+                    </button>
+                    <button class="pill-btn" id="btnThemeSchoolMath">
+                        <i class="fa-solid fa-square-root-variable"></i> Squared Grid
+                    </button>
+                </div>
+            </div>
+
+            <!-- VISUALIZATION TOGGLES -->
+            <div class="panel-section">
+                <div class="panel-section-title">
+                    <span><i class="fa-solid fa-sliders"></i> Display & Tools</span>
+                </div>
+                
+                <div class="control-row">
+                    <span>Show Slope Triangle (Δy/Δx)</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="chkShowSlope" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="control-row">
+                    <span>Show Area Under Curve</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="chkShowArea" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="control-row">
+                    <span>Show Coordinate Labels</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="chkShowCoords" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="control-row">
+                    <span>Interpolate Smooth Curve</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="chkSmoothCurve">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="control-row">
+                    <span>Sound Effects</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="chkSound" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- PRESET SCENARIOS -->
+            <div class="panel-section" style="border-bottom:none;">
+                <div class="panel-section-title">
+                    <span><i class="fa-solid fa-bookmark"></i> Standard Presets</span>
+                </div>
+                <div class="preset-grid">
+                    <button class="preset-btn" data-preset="uniform-velocity">
+                        <span class="name">Uniform Velocity</span>
+                        <small>Straight line, constant slope</small>
+                    </button>
+                    <button class="preset-btn" data-preset="uniform-accel">
+                        <span class="name">Uniform Acceleration</span>
+                        <small>Linear v-t / Parabolic s-t</small>
+                    </button>
+                    <button class="preset-btn" data-preset="stationary">
+                        <span class="name">Object at Rest</span>
+                        <small>Horizontal line at s = 15m</small>
+                    </button>
+                    <button class="preset-btn" data-preset="braking">
+                        <span class="name">Braking / Retardation</span>
+                        <small>Negative slope to 0 m/s</small>
+                    </button>
+                    <button class="preset-btn" data-preset="trip-3phase">
+                        <span class="name">3-Phase Journey</span>
+                        <small>Accel → Uniform → Decel</small>
+                    </button>
+                    <button class="preset-btn" data-preset="free-fall">
+                        <span class="name">Free Fall (g = 9.8)</span>
+                        <small>Slope = 9.8 m/s²</small>
+                    </button>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- CENTER WORKSPACE: REALISTIC CANVAS GRAPH SHEET & LIVE RUNNER -->
+        <section class="center-workspace">
+
+            <!-- PHYSICAL OBJECT TRACK (CONNECTS GRAPH TO REAL MOTION) -->
+            <div class="simulation-track-strip">
+                <div class="track-header">
+                    <div class="track-title">
+                        <i class="fa-solid fa-car-side"></i> PHYSICAL MOTION SIMULATOR TRACK
+                    </div>
+                    <div class="track-hud">
+                        <span>Time: <b id="hudTime">0.00 s</b></span>
+                        <span>Position: <b id="hudPos">0.00 m</b></span>
+                        <span>Velocity: <b id="hudVel">0.00 m/s</b></span>
+                        <span>State: <b id="hudState" style="color:var(--accent-green)">READY</b></span>
+                    </div>
+                </div>
+
+                <div class="track-road-container" id="trackRoad">
+                    <div class="track-road-lines"></div>
+                    <div class="track-finish-line"></div>
+                    <div class="track-vehicle" id="trackCar">
+                        <div class="track-vehicle-exhaust" id="carExhaust"></div>
+                        <i class="fa-solid fa-car-side"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CANVAS CONTAINER -->
+            <div class="canvas-container" id="canvasContainer">
+                <canvas id="graphCanvas"></canvas>
+
+                <!-- CANVAS FLOATING TOOLS -->
+                <div class="canvas-overlay-controls">
+                    <button class="canvas-icon-btn" id="btnZoomIn" title="Zoom In">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <button class="canvas-icon-btn" id="btnZoomOut" title="Zoom Out">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <button class="canvas-icon-btn" id="btnCenterOrigin" title="Reset View & Center">
+                        <i class="fa-solid fa-crosshairs"></i>
+                    </button>
+                    <button class="canvas-icon-btn" id="btnSnapGrid" title="Snap dragged points to grid">
+                        <i class="fa-solid fa-magnet" style="color:var(--accent-cyan)"></i>
+                    </button>
+                </div>
+
+                <!-- LIVE COORDINATES HUD -->
+                <div class="canvas-coordinates-hud">
+                    <div>Cursor: <span class="val" id="cursorCoordText">X: 0.00, Y: 0.00</span></div>
+                    <div>Interval: <span class="val" id="intervalStatusText">P1 → P2</span></div>
+                    <div>Drag points to manipulate graph directly!</div>
+                </div>
+            </div>
+
+            <!-- BOTTOM PLAYBACK CONTROLS -->
+            <div class="graph-bottom-bar">
+                <div class="playback-group">
+                    <button class="btn btn-primary" id="btnPlayPause">
+                        <i class="fa-solid fa-play" id="playIcon"></i> <span id="playText">Play Motion</span>
+                    </button>
+                    <button class="btn" id="btnStopMotion">
+                        <i class="fa-solid fa-stop"></i> Stop
+                    </button>
+                </div>
+
+                <div class="time-slider-wrapper">
+                    <span id="sliderTimeMin">t = 0.0s</span>
+                    <input type="range" class="range-slider" id="motionTimeSlider" min="0" max="10" step="0.05" value="0">
+                    <span id="sliderTimeMax">t = 10.0s</span>
+                </div>
+
+                <div class="playback-group">
+                    <label style="font-size:11px; color:var(--text-muted);">Speed:</label>
+                    <button class="btn" id="btnSimSpeed" style="padding:4px 8px; font-size:11px;">1.0x</button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- RIGHT SIDEBAR: REAL-TIME DATA TABLE & RIGOROUS PHYSICS ENGINE -->
+        <aside class="sidebar sidebar-right">
+            
+            <!-- REAL-TIME DATA ENTRY TABLE -->
+            <div class="panel-section">
+                <div class="panel-section-title">
+                    <span><i class="fa-solid fa-table-cells"></i> Motion Data Points</span>
+                    <span style="font-size:11px; font-weight:normal; text-transform:none; color:var(--text-muted);">Real-time reactive</span>
+                </div>
+
+                <div class="data-table-container">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th style="width:28px">#</th>
+                                <th id="thColX">X: t (s)</th>
+                                <th id="thColY">Y: s (m)</th>
+                                <th style="width:40px; text-align:right;">Δy/Δx</th>
+                                <th style="width:28px"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody">
+                            <!-- Rows populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-green" id="btnAddPoint" style="flex:1;">
+                        <i class="fa-solid fa-plus"></i> Add Point
+                    </button>
+                    <button class="btn" id="btnSortPoints" title="Sort points in chronological order of X">
+                        <i class="fa-solid fa-arrow-down-1-9"></i> Sort
+                    </button>
+                </div>
+            </div>
+
+            <!-- MATHEMATICALLY ACCURATE SLOPE ANALYSIS CARD -->
+            <div class="panel-section">
+                <div class="analysis-card slope-card">
+                    <div class="analysis-card-header">
+                        <div class="analysis-card-title">
+                            <i class="fa-solid fa-chart-simple"></i> SLOPE (GRADIENT)
+                        </div>
+                        <div class="physical-meaning-badge" id="slopeMeaningBadge">
+                            VELOCITY (v)
+                        </div>
+                    </div>
+
+                    <div style="font-size:11px; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center;">
+                        <span>Evaluation Interval:</span>
+                        <select id="slopeIntervalSelect" style="background:#181f33; border:1px solid #28324e; color:#fff; font-size:11px; border-radius:4px; padding:2px 6px;">
+                            <option value="overall">Overall (First to Last)</option>
+                        </select>
+                    </div>
+
+                    <div class="calculation-display">
+                        <div class="calc-step" id="slopeFormulaText">
+                            Slope = ΔY / ΔX = (y₂ - y₁) / (x₂ - x₁)
+                        </div>
+                        <div class="calc-step" id="slopeArithmeticText">
+                            = (20.00 - 0.00) / (4.00 - 0.00)
+                        </div>
+                        <div class="calc-result-row">
+                            <div class="result-quantity" id="slopeQuantityLabel">
+                                Velocity (v):
+                            </div>
+                            <div class="result-value-big" id="slopeValueDisplay">
+                                5.00 m/s
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ncert-tip-box" id="slopePhysicsInsight">
+                        <b>Physics Principle:</b> For a <i>Distance-Time</i> graph, the slope represents the <b>Speed</b> of the object. For a <i>Displacement-Time</i> graph, it represents <b>Velocity</b>.
+                    </div>
+                </div>
+
+                <!-- MATHEMATICALLY ACCURATE AREA UNDER CURVE CARD -->
+                <div class="analysis-card area-card">
+                    <div class="analysis-card-header">
+                        <div class="analysis-card-title">
+                            <i class="fa-solid fa-shapes"></i> AREA UNDER CURVE
+                        </div>
+                        <div class="physical-meaning-badge" id="areaMeaningBadge">
+                            DISPLACEMENT (s)
+                        </div>
+                    </div>
+
+                    <div style="font-size:11px; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center;">
+                        <span>Region Range:</span>
+                        <span style="font-family:var(--font-mono); color:var(--accent-green);" id="areaRangeText">x = 0.0s to 10.0s</span>
+                    </div>
+
+                    <div class="calculation-display">
+                        <div class="calc-step" id="areaFormulaText">
+                            Area = ∫ y dx ≈ Sum of Trapezoids (½(y₁ + y₂)Δx)
+                        </div>
+                        <div class="calc-step" id="areaDecompositionText">
+                            Geometric sum: Rectangle (u·t) + Triangle (½(v-u)t)
+                        </div>
+                        <div class="calc-result-row">
+                            <div class="result-quantity" id="areaQuantityLabel">
+                                Total Displacement:
+                            </div>
+                            <div class="result-value-big" id="areaValueDisplay">
+                                75.00 m
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ncert-tip-box" id="areaPhysicsInsight">
+                        <b>Physics Principle:</b> The area under a <i>Velocity-Time</i> graph gives the <b>Magnitude of Displacement</b> (Distance if speed).
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+    </main>
+
+    <!-- NCERT EQUATIONS OF MOTION MODAL -->
+    <div class="modal-overlay" id="derivationsModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-graduation-cap"></i> Graphical Derivation of Equations of Motion</h3>
+                <button class="modal-close-btn" id="btnCloseModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p>In NCERT Class 9 Chapter 5 (Motion), the three equations of motion are derived directly from the <b>Velocity-Time (v-t) graph</b> for a body moving with uniform acceleration $a$:</p>
+
+                <div class="derivation-step">
+                    <b>1. First Equation: Velocity-Time Relation ($v = u + at$)</b>
+                    <br>Slope of v-t graph represents Acceleration ($a$):
+                    <br>$$\text{Slope } a = \frac{\Delta v}{\Delta t} = \frac{v - u}{t - 0}$$
+                    <br>$$\implies v - u = at \implies \mathbf{v = u + at}$$
+                </div>
+
+                <div class="derivation-step">
+                    <b>2. Second Equation: Position-Time Relation ($s = ut + \frac{1}{2}at^2$)</b>
+                    <br>Area under v-t graph represents Distance/Displacement ($s$):
+                    <br>$$\text{Distance } s = \text{Area of OABC} = \text{Area of Rectangle OADC} + \text{Area of Triangle ABD}$$
+                    <br>$$\text{Area of Rectangle} = OA \times OC = u \times t = ut$$
+                    <br>$$\text{Area of Triangle} = \frac{1}{2} \times \text{Base} \times \text{Height} = \frac{1}{2} \times t \times (v - u)$$
+                    <br>Since $(v - u) = at$:
+                    <br>$$s = ut + \frac{1}{2} \times t \times (at) \implies \mathbf{s = ut + \frac{1}{2}at^2}$$
+                </div>
+
+                <div class="derivation-step">
+                    <b>3. Third Equation: Position-Velocity Relation ($2as = v^2 - u^2$)</b>
+                    <br>Using formula for Area of Trapezium OABC:
+                    <br>$$s = \frac{\text{Sum of parallel sides} \times \text{Height}}{2} = \frac{(OA + BC) \times OC}{2} = \frac{(u + v)t}{2}$$
+                    <br>From 1st equation, $t = \frac{v - u}{a}$. Substituting $t$:
+                    <br>$$s = \frac{(v + u)(v - u)}{2a} = \frac{v^2 - u^2}{2a} \implies \mathbf{2as = v^2 - u^2}$$
+                </div>
+
+                <div style="text-align:center; margin-top:14px;">
+                    <button class="btn btn-primary" id="btnLoadDerivationPreset">
+                        <i class="fa-solid fa-play"></i> Load NCERT Uniform Acceleration Graph
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIO SYNTHESIS SCRIPT (ZERO ASSETS NEEDED) -->
+    <script>
+        const SoundFX = {
+            ctx: null,
+            init() {
+                if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            play(type = 'click') {
+                if (!document.getElementById('chkSound')?.checked) return;
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    if (this.ctx.state === 'suspended') this.ctx.resume();
+
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    const now = this.ctx.currentTime;
+                    if (type === 'click') {
+                        osc.frequency.setValueAtTime(800, now);
+                        osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
+                        gain.gain.setValueAtTime(0.08, now);
+                        gain.gain.linearRampToValueAtTime(0, now + 0.05);
+                        osc.start(now);
+                        osc.stop(now + 0.05);
+                    } else if (type === 'snap') {
+                        osc.frequency.setValueAtTime(1200, now);
+                        gain.gain.setValueAtTime(0.05, now);
+                        gain.gain.linearRampToValueAtTime(0, now + 0.04);
+                        osc.start(now);
+                        osc.stop(now + 0.04);
+                    } else if (type === 'success') {
+                        osc.frequency.setValueAtTime(440, now);
+                        osc.frequency.setValueAtTime(659.25, now + 0.08);
+                        gain.gain.setValueAtTime(0.08, now);
+                        gain.gain.linearRampToValueAtTime(0, now + 0.25);
+                        osc.start(now);
+                        osc.stop(now + 0.25);
+                    }
+                } catch(e) {}
+            }
+        };
+    </script>
+
+    <!-- CORE SIMULATION JAVASCRIPT -->
+    <script>
+        /* =========================================================================
+           PHYSICAL QUANTITIES & UNIT REGISTRY
+           ========================================================================= */
+        const QUANTITIES = {
+            time: { name: 'Time', symbol: 't', unit: 's', defaultMin: 0, defaultMax: 10, defaultStep: 1 },
+            distance: { name: 'Distance', symbol: 's', unit: 'm', defaultMin: 0, defaultMax: 100, defaultStep: 10 },
+            displacement: { name: 'Displacement', symbol: 'x', unit: 'm', defaultMin: -50, defaultMax: 50, defaultStep: 10 },
+            speed: { name: 'Speed', symbol: 'v', unit: 'm/s', defaultMin: 0, defaultMax: 30, defaultStep: 5 },
+            velocity: { name: 'Velocity', symbol: 'v', unit: 'm/s', defaultMin: -25, defaultMax: 25, defaultStep: 5 },
+            acceleration: { name: 'Acceleration', symbol: 'a', unit: 'm/s²', defaultMin: -10, defaultMax: 10, defaultStep: 2 }
+        };
+
+        /* =========================================================================
+           STATE MACHINE
+           ========================================================================= */
+        const State = {
+            xAxis: 'time',
+            yAxis: 'distance',
+            theme: 'millimeter', // 'millimeter', 'darklab', 'blueprint', 'schoolmath'
+            showSlope: true,
+            showArea: true,
+            showCoords: true,
+            smoothCurve: false,
+            snapToGrid: true,
+            
+            // Viewport Pan & Zoom
+            scaleX: 50, // pixels per unit
+            scaleY: 20, // pixels per unit
+            originPixelX: 70, // pixel offset from left
+            originPixelY: 0,  // pixel offset from bottom (computed on resize)
+            isPanning: false,
+            panStartX: 0,
+            panStartY: 0,
+
+            // Interactive Data Points: [{x: 0, y: 0}, ...]
+            points: [
+                { x: 0, y: 0 },
+                { x: 2, y: 10 },
+                { x: 4, y: 20 },
+                { x: 6, y: 30 },
+                { x: 8, y: 40 },
+                { x: 10, y: 50 }
+            ],
+
+            // Active dragging of a point
+            draggedPointIdx: -1,
+            hoveredPointIdx: -1,
+
+            // Simulation Animation
+            isPlaying: false,
+            simCurrentTime: 0,
+            simSpeed: 1.0,
+            simMaxTime: 10,
+            animFrameId: null,
+            lastFrameTimestamp: null,
+
+            // Selected evaluation interval for slope
+            slopeInterval: 'overall'
+        };
+
+        /* =========================================================================
+           GRAPH PAPER THEMES
+           ========================================================================= */
+        const THEMES = {
+            millimeter: {
+                name: 'Millimeter Paper',
+                bg: '#f8faf6',
+                majorGrid: '#68bb85',
+                mediumGrid: '#a4dbae',
+                minorGrid: '#d5edd9',
+                axes: '#1b4332',
+                axisText: '#081c15',
+                curve: '#0066cc',
+                curveFill: 'rgba(0, 102, 204, 0.18)',
+                pointFill: '#ffffff',
+                pointStroke: '#0066cc',
+                slopeHypotenuse: '#d90429',
+                slopeTriangle: 'rgba(217, 4, 41, 0.12)',
+                slopeText: '#8d0801',
+                areaFill: 'rgba(40, 167, 69, 0.22)',
+                areaBoundary: '#1e7e34',
+                originLabel: '#1b4332',
+                crosshair: 'rgba(0, 102, 204, 0.4)'
+            },
+            darklab: {
+                name: 'Cyber Lab',
+                bg: '#080b12',
+                majorGrid: '#1e293b',
+                mediumGrid: '#131b2c',
+                minorGrid: '#0d1320',
+                axes: '#38bdf8',
+                axisText: '#94a3b8',
+                curve: '#00f0ff',
+                curveFill: 'rgba(0, 240, 255, 0.12)',
+                pointFill: '#00f0ff',
+                pointStroke: '#ffffff',
+                slopeHypotenuse: '#ff0077',
+                slopeTriangle: 'rgba(255, 0, 119, 0.15)',
+                slopeText: '#ff0077',
+                areaFill: 'rgba(0, 255, 136, 0.20)',
+                areaBoundary: '#00ff88',
+                originLabel: '#38bdf8',
+                crosshair: 'rgba(0, 240, 255, 0.4)'
+            },
+            blueprint: {
+                name: 'Blueprint',
+                bg: '#0c2340',
+                majorGrid: '#1d4ed8',
+                mediumGrid: '#1e40af',
+                minorGrid: '#172554',
+                axes: '#93c5fd',
+                axisText: '#bfdbfe',
+                curve: '#facc15',
+                curveFill: 'rgba(250, 204, 21, 0.15)',
+                pointFill: '#ffffff',
+                pointStroke: '#facc15',
+                slopeHypotenuse: '#f43f5e',
+                slopeTriangle: 'rgba(244, 63, 94, 0.15)',
+                slopeText: '#f43f5e',
+                areaFill: 'rgba(56, 189, 248, 0.25)',
+                areaBoundary: '#38bdf8',
+                originLabel: '#93c5fd',
+                crosshair: 'rgba(250, 204, 21, 0.4)'
+            },
+            schoolmath: {
+                name: 'Squared Grid',
+                bg: '#ffffff',
+                majorGrid: '#94a3b8',
+                mediumGrid: '#cbd5e1',
+                minorGrid: '#f1f5f9',
+                axes: '#0f172a',
+                axisText: '#334155',
+                curve: '#2563eb',
+                curveFill: 'rgba(37, 99, 235, 0.12)',
+                pointFill: '#ffffff',
+                pointStroke: '#2563eb',
+                slopeHypotenuse: '#dc2626',
+                slopeTriangle: 'rgba(220, 38, 38, 0.12)',
+                slopeText: '#b91c1c',
+                areaFill: 'rgba(16, 185, 129, 0.2)',
+                areaBoundary: '#059669',
+                originLabel: '#0f172a',
+                crosshair: 'rgba(37, 99, 235, 0.4)'
+            }
+        };
+
+        /* =========================================================================
+           CANVAS & RENDERING ENGINE
+           ========================================================================= */
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        function resizeCanvas() {
+            const rect = canvasContainer.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            if (State.originPixelY === 0) {
+                // Initialize origin around bottom left
+                State.originPixelY = rect.height - 60;
+                fitGraphToViewport();
+            }
+            drawGraph();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        /* World to Screen & Screen to World transforms */
+        function worldToScreen(wx, wy) {
+            const sx = State.originPixelX + wx * State.scaleX;
+            const sy = State.originPixelY - wy * State.scaleY;
+            return { x: sx, y: sy };
+        }
+
+        function screenToWorld(sx, sy) {
+            const wx = (sx - State.originPixelX) / State.scaleX;
+            const wy = (State.originPixelY - sy) / State.scaleY;
+            return { x: wx, y: wy };
+        }
+
+        /* Auto-Fit Viewport to all points */
+        function fitGraphToViewport() {
+            if (!State.points || State.points.length === 0) return;
+            const rect = canvasContainer.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+
+            let minX = 0, maxX = 10, minY = 0, maxY = 50;
+            State.points.forEach(p => {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.y > maxY) maxY = p.y;
+            });
+
+            // Add margin padding
+            const rangeX = (maxX - minX) || 10;
+            const rangeY = (maxY - minY) || 10;
+
+            const marginW = width * 0.16;
+            const marginH = height * 0.18;
+
+            const availW = width - marginW * 2;
+            const availH = height - marginH * 2;
+
+            State.scaleX = Math.max(10, Math.min(250, availW / (rangeX * 1.15)));
+            State.scaleY = Math.max(5, Math.min(200, availH / (rangeY * 1.15)));
+
+            State.originPixelX = marginW - minX * State.scaleX;
+            State.originPixelY = height - marginH + minY * State.scaleY;
+
+            drawGraph();
+        }
+
+        /* Calculate Nice Tick Step */
+        function calculateNiceStep(range, targetTicks = 8) {
+            const roughStep = range / targetTicks;
+            const power = Math.floor(Math.log10(roughStep));
+            const base = roughStep / Math.pow(10, power);
+            let niceBase;
+            if (base < 1.5) niceBase = 1;
+            else if (base < 3) niceBase = 2;
+            else if (base < 7) niceBase = 5;
+            else niceBase = 10;
+            return niceBase * Math.pow(10, power);
+        }
+
+        /* Master Draw Routine */
+        function drawGraph() {
+            const rect = canvasContainer.getBoundingClientRect();
+            const w = rect.width;
+            const h = rect.height;
+            const theme = THEMES[State.theme] || THEMES.millimeter;
+
+            // Clear Background
+            ctx.fillStyle = theme.bg;
+            ctx.fillRect(0, 0, w, h);
+
+            // Compute visible bounds in world coordinates
+            const topLeft = screenToWorld(0, 0);
+            const bottomRight = screenToWorld(w, h);
+
+            const minWx = Math.min(topLeft.x, bottomRight.x);
+            const maxWx = Math.max(topLeft.x, bottomRight.x);
+            const minWy = Math.min(topLeft.y, bottomRight.y);
+            const maxWy = Math.max(topLeft.y, bottomRight.y);
+
+            const stepX = calculateNiceStep(maxWx - minWx, 10);
+            const stepY = calculateNiceStep(maxWy - minWy, 8);
+
+            // 1. Draw Minor & Medium Millimeter Subdivisions
+            const minorStepX = stepX / 10;
+            const minorStepY = stepY / 10;
+
+            if (State.scaleX * minorStepX > 4) {
+                ctx.strokeStyle = theme.minorGrid;
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                const startMinorX = Math.floor(minWx / minorStepX) * minorStepX;
+                for (let x = startMinorX; x <= maxWx; x += minorStepX) {
+                    const sx = worldToScreen(x, 0).x;
+                    ctx.moveTo(sx, 0);
+                    ctx.lineTo(sx, h);
+                }
+                const startMinorY = Math.floor(minWy / minorStepY) * minorStepY;
+                for (let y = startMinorY; y <= maxWy; y += minorStepY) {
+                    const sy = worldToScreen(0, y).y;
+                    ctx.moveTo(0, sy);
+                    ctx.lineTo(w, sy);
+                }
+                ctx.stroke();
+            }
+
+            // Medium 5mm lines
+            const medStepX = stepX / 2;
+            const medStepY = stepY / 2;
+            if (State.scaleX * medStepX > 10) {
+                ctx.strokeStyle = theme.mediumGrid;
+                ctx.lineWidth = 0.8;
+                ctx.beginPath();
+                const startMedX = Math.floor(minWx / medStepX) * medStepX;
+                for (let x = startMedX; x <= maxWx; x += medStepX) {
+                    const sx = worldToScreen(x, 0).x;
+                    ctx.moveTo(sx, 0);
+                    ctx.lineTo(sx, h);
+                }
+                const startMedY = Math.floor(minWy / medStepY) * medStepY;
+                for (let y = startMedY; y <= maxWy; y += medStepY) {
+                    const sy = worldToScreen(0, y).y;
+                    ctx.moveTo(0, sy);
+                    ctx.lineTo(w, sy);
+                }
+                ctx.stroke();
+            }
+
+            // 2. Draw Major 10mm Lines & Tick Numbers
+            ctx.strokeStyle = theme.majorGrid;
+            ctx.lineWidth = 1.2;
+            ctx.fillStyle = theme.axisText;
+            ctx.font = '10px ' + (State.theme === 'darklab' ? 'Share Tech Mono' : 'Inter');
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            const startX = Math.floor(minWx / stepX) * stepX;
+            for (let x = startX; x <= maxWx; x += stepX) {
+                const sx = worldToScreen(x, 0).x;
+                ctx.beginPath();
+                ctx.moveTo(sx, 0);
+                ctx.lineTo(sx, h);
+                ctx.stroke();
+
+                // Number label along axis
+                if (Math.abs(x) > 0.0001) {
+                    const labelY = Math.min(Math.max(State.originPixelY + 6, 12), h - 18);
+                    ctx.fillText(Number(x.toFixed(2)), sx, labelY);
+                }
+            }
+
+            const startY = Math.floor(minWy / stepY) * stepY;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let y = startY; y <= maxWy; y += stepY) {
+                const sy = worldToScreen(0, y).y;
+                ctx.beginPath();
+                ctx.moveTo(0, sy);
+                ctx.lineTo(w, sy);
+                ctx.stroke();
+
+                if (Math.abs(y) > 0.0001) {
+                    const labelX = Math.max(Math.min(State.originPixelX - 6, w - 10), 30);
+                    ctx.fillText(Number(y.toFixed(2)), labelX, sy);
+                }
+            }
+
+            // 3. Draw Bold X & Y Axes with Arrowheads
+            ctx.strokeStyle = theme.axes;
+            ctx.lineWidth = 2.5;
+
+            // X-Axis
+            ctx.beginPath();
+            ctx.moveTo(0, State.originPixelY);
+            ctx.lineTo(w, State.originPixelY);
+            ctx.stroke();
+
+            // Arrow at right of X-Axis
+            ctx.fillStyle = theme.axes;
+            ctx.beginPath();
+            ctx.moveTo(w - 2, State.originPixelY);
+            ctx.lineTo(w - 12, State.originPixelY - 5);
+            ctx.lineTo(w - 12, State.originPixelY + 5);
+            ctx.closePath();
+            ctx.fill();
+
+            // Y-Axis
+            ctx.beginPath();
+            ctx.moveTo(State.originPixelX, h);
+            ctx.lineTo(State.originPixelX, 0);
+            ctx.stroke();
+
+            // Arrow at top of Y-Axis
+            ctx.beginPath();
+            ctx.moveTo(State.originPixelX, 2);
+            ctx.lineTo(State.originPixelX - 5, 12);
+            ctx.lineTo(State.originPixelX + 5, 12);
+            ctx.closePath();
+            ctx.fill();
+
+            // Origin Label (O / 0,0)
+            ctx.fillStyle = theme.originLabel;
+            ctx.font = 'bold 11px Inter';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.fillText('0', State.originPixelX - 6, State.originPixelY + 4);
+
+            // Axis Title Labels with Units
+            const xQty = QUANTITIES[State.xAxis];
+            const yQty = QUANTITIES[State.yAxis];
+
+            ctx.font = 'bold 12px Inter';
+            // X-Axis Label
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            ctx.fillStyle = theme.axes;
+            ctx.fillText(`${xQty.name} ${xQty.symbol} (${xQty.unit}) →`, w - 18, State.originPixelY - 8);
+
+            // Y-Axis Label
+            ctx.save();
+            ctx.translate(State.originPixelX + 16, 24);
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(`↑ ${yQty.name} ${yQty.symbol} (${yQty.unit})`, 0, 0);
+            ctx.restore();
+
+            // 4. Draw Shaded Area Under Curve (If enabled)
+            if (State.showArea && State.points.length >= 2) {
+                drawAreaUnderCurve(theme);
+            }
+
+            // 5. Draw Slope Triangle (If enabled)
+            if (State.showSlope && State.points.length >= 2) {
+                drawSlopeTriangle(theme);
+            }
+
+            // 6. Draw Plotted Points & Connecting Curve
+            drawPointsAndCurve(theme);
+
+            // 7. Draw Active Motion Scrubber / Runner Point on Graph
+            drawSimulationGraphMarker(theme);
+        }
+
+        /* Draw Area Under the Curve on Canvas */
+        function drawAreaUnderCurve(theme) {
+            if (State.points.length < 2) return;
+            const pts = [...State.points].sort((a, b) => a.x - b.x);
+
+            ctx.save();
+            ctx.fillStyle = theme.areaFill;
+            ctx.strokeStyle = theme.areaBoundary;
+            ctx.lineWidth = 1.5;
+
+            ctx.beginPath();
+            const firstScr = worldToScreen(pts[0].x, pts[0].y);
+            const firstBaseline = worldToScreen(pts[0].x, 0);
+            ctx.moveTo(firstBaseline.x, firstBaseline.y);
+            ctx.lineTo(firstScr.x, firstScr.y);
+
+            for (let i = 1; i < pts.length; i++) {
+                const scr = worldToScreen(pts[i].x, pts[i].y);
+                ctx.lineTo(scr.x, scr.y);
+            }
+
+            const lastBaseline = worldToScreen(pts[pts.length - 1].x, 0);
+            ctx.lineTo(lastBaseline.x, lastBaseline.y);
+            ctx.closePath();
+            ctx.fill();
+
+            // Dashed boundary vertical drops to x-axis
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(firstBaseline.x, firstBaseline.y);
+            ctx.lineTo(firstScr.x, firstScr.y);
+            ctx.moveTo(lastBaseline.x, lastBaseline.y);
+            const lastScr = worldToScreen(pts[pts.length - 1].x, pts[pts.length - 1].y);
+            ctx.lineTo(lastScr.x, lastScr.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Label the shaded region
+            const midIdx = Math.floor(pts.length / 2);
+            const midPt = pts[midIdx];
+            const midScr = worldToScreen(midPt.x, midPt.y / 2);
+            ctx.fillStyle = theme.areaBoundary;
+            ctx.font = 'bold 11px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('AREA UNDER CURVE', midScr.x, midScr.y);
+
+            ctx.restore();
+        }
+
+        /* Draw Slope Triangle */
+        function drawSlopeTriangle(theme) {
+            const pts = [...State.points].sort((a, b) => a.x - b.x);
+            if (pts.length < 2) return;
+
+            let p1 = pts[0];
+            let p2 = pts[pts.length - 1];
+
+            if (State.slopeInterval !== 'overall') {
+                const idx = parseInt(State.slopeInterval);
+                if (!isNaN(idx) && idx >= 0 && idx < pts.length - 1) {
+                    p1 = pts[idx];
+                    p2 = pts[idx + 1];
+                }
+            }
+
+            const s1 = worldToScreen(p1.x, p1.y);
+            const s2 = worldToScreen(p2.x, p2.y);
+            const corner = worldToScreen(p2.x, p1.y); // right-angle corner
+
+            ctx.save();
+            // Fill Right-Angled Slope Triangle
+            ctx.fillStyle = theme.slopeTriangle;
+            ctx.beginPath();
+            ctx.moveTo(s1.x, s1.y);
+            ctx.lineTo(corner.x, corner.y);
+            ctx.lineTo(s2.x, s2.y);
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw Dashed Base (Run: Δx) & Height (Rise: Δy)
+            ctx.strokeStyle = theme.slopeHypotenuse;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 4]);
+
+            // Run (Δx)
+            ctx.beginPath();
+            ctx.moveTo(s1.x, s1.y);
+            ctx.lineTo(corner.x, corner.y);
+            ctx.stroke();
+
+            // Rise (Δy)
+            ctx.beginPath();
+            ctx.moveTo(corner.x, corner.y);
+            ctx.lineTo(s2.x, s2.y);
+            ctx.stroke();
+
+            // Solid Hypotenuse on line of slope
+            ctx.setLineDash([]);
+            ctx.strokeStyle = theme.slopeHypotenuse;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(s1.x, s1.y);
+            ctx.lineTo(s2.x, s2.y);
+            ctx.stroke();
+
+            // Right-angle marker square
+            const squareSize = 8;
+            const signX = p2.x >= p1.x ? -1 : 1;
+            const signY = p2.y >= p1.y ? -1 : 1;
+            ctx.strokeStyle = theme.slopeHypotenuse;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(corner.x, corner.y, signX * squareSize, signY * squareSize);
+
+            // Labels: Δx and Δy
+            ctx.font = 'bold 11px Share Tech Mono';
+            ctx.fillStyle = theme.slopeText;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            ctx.fillText(`ΔX = ${dx.toFixed(2)}`, (s1.x + corner.x) / 2, corner.y + (signY > 0 ? -16 : 4));
+
+            ctx.textAlign = p2.x >= p1.x ? 'left' : 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`ΔY = ${dy.toFixed(2)}`, corner.x + (p2.x >= p1.x ? 6 : -6), (corner.y + s2.y) / 2);
+
+            ctx.restore();
+        }
+
+        /* Draw Plotted Points and Connecting Curves */
+        function drawPointsAndCurve(theme) {
+            if (State.points.length === 0) return;
+            const pts = [...State.points].sort((a, b) => a.x - b.x);
+
+            ctx.save();
+
+            // Draw connecting line
+            ctx.strokeStyle = theme.curve;
+            ctx.lineWidth = 3;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+
+            const first = worldToScreen(pts[0].x, pts[0].y);
+            ctx.moveTo(first.x, first.y);
+
+            if (State.smoothCurve && pts.length > 2) {
+                // Catmull-Rom spline interpolation
+                for (let i = 0; i < pts.length - 1; i++) {
+                    const p0 = pts[Math.max(0, i - 1)];
+                    const p1 = pts[i];
+                    const p2 = pts[i + 1];
+                    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+
+                    for (let t = 0; t <= 1; t += 0.05) {
+                        const t2 = t * t;
+                        const t3 = t2 * t;
+
+                        const wx = 0.5 * ((2 * p1.x) +
+                            (-p0.x + p2.x) * t +
+                            (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 +
+                            (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3);
+
+                        const wy = 0.5 * ((2 * p1.y) +
+                            (-p0.y + p2.y) * t +
+                            (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 +
+                            (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3);
+
+                        const scr = worldToScreen(wx, wy);
+                        ctx.lineTo(scr.x, scr.y);
+                    }
+                }
+            } else {
+                // Standard piecewise linear connection
+                for (let i = 1; i < pts.length; i++) {
+                    const scr = worldToScreen(pts[i].x, pts[i].y);
+                    ctx.lineTo(scr.x, scr.y);
+                }
+            }
+            ctx.stroke();
+
+            // Draw Points
+            pts.forEach((p, idx) => {
+                const scr = worldToScreen(p.x, p.y);
+                const isHovered = (State.hoveredPointIdx === idx);
+                const isDragged = (State.draggedPointIdx === idx);
+
+                // Outer halo
+                ctx.beginPath();
+                ctx.arc(scr.x, scr.y, isDragged ? 10 : (isHovered ? 8 : 6), 0, Math.PI * 2);
+                ctx.fillStyle = theme.curve;
+                ctx.fill();
+
+                // Inner circle
+                ctx.beginPath();
+                ctx.arc(scr.x, scr.y, isDragged ? 5 : (isHovered ? 4 : 3), 0, Math.PI * 2);
+                ctx.fillStyle = theme.pointFill;
+                ctx.fill();
+
+                // Coordinate tags
+                if (State.showCoords) {
+                    ctx.font = 'bold 10px Share Tech Mono';
+                    ctx.fillStyle = theme.axisText;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(`(${p.x.toFixed(1)}, ${p.y.toFixed(1)})`, scr.x, scr.y - 8);
+                }
+            });
+
+            ctx.restore();
+        }
+
+        /* Marker on Graph during Playback */
+        function drawSimulationGraphMarker(theme) {
+            if (State.points.length === 0) return;
+            const t = State.simCurrentTime;
+            const valY = interpolateY(t);
+            const scr = worldToScreen(t, valY);
+
+            ctx.save();
+            // Vertical pulse bar
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.6)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(scr.x, 0);
+            ctx.lineTo(scr.x, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Marker Dot
+            ctx.beginPath();
+            ctx.arc(scr.x, scr.y, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff0077';
+            ctx.shadowColor = '#ff0077';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(scr.x, scr.y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        /* Linear interpolation of Y at arbitrary X = t */
+        function interpolateY(t) {
+            const pts = [...State.points].sort((a, b) => a.x - b.x);
+            if (pts.length === 0) return 0;
+            if (t <= pts[0].x) return pts[0].y;
+            if (t >= pts[pts.length - 1].x) return pts[pts.length - 1].y;
+
+            for (let i = 0; i < pts.length - 1; i++) {
+                if (t >= pts[i].x && t <= pts[i + 1].x) {
+                    const ratio = (t - pts[i].x) / (pts[i + 1].x - pts[i].x);
+                    return pts[i].y + ratio * (pts[i + 1].y - pts[i].y);
+                }
+            }
+            return pts[pts.length - 1].y;
+        }
+
+        /* =========================================================================
+           RIGOROUS MATHEMATICAL & PHYSICS ANALYSIS ENGINE
+           ========================================================================= */
+        function analyzeMotion() {
+            const pts = [...State.points].sort((a, b) => a.x - b.x);
+            if (pts.length === 0) return;
+
+            const xQty = QUANTITIES[State.xAxis];
+            const yQty = QUANTITIES[State.yAxis];
+
+            // 1. CALCULATE SLOPE
+            let p1 = pts[0];
+            let p2 = pts[pts.length - 1];
+
+            // Populate interval dropdown options
+            const sel = document.getElementById('slopeIntervalSelect');
+            const currentSelVal = sel.value;
+            sel.innerHTML = '<option value="overall">Overall (P₁ → Pₙ)</option>';
+            for (let i = 0; i < pts.length - 1; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Interval P${i+1} (${pts[i].x.toFixed(1)}s) → P${i+2} (${pts[i+1].x.toFixed(1)}s)`;
+                sel.appendChild(opt);
+            }
+            if (sel.querySelector(`option[value="${currentSelVal}"]`)) {
+                sel.value = currentSelVal;
+            } else {
+                sel.value = 'overall';
+                State.slopeInterval = 'overall';
+            }
+
+            if (State.slopeInterval !== 'overall') {
+                const idx = parseInt(State.slopeInterval);
+                if (!isNaN(idx) && idx >= 0 && idx < pts.length - 1) {
+                    p1 = pts[idx];
+                    p2 = pts[idx + 1];
+                }
+            }
+
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const slopeVal = dx !== 0 ? dy / dx : Infinity;
+
+            // Physical Interpretation of Slope
+            let slopeQuantityName = 'Rate of Change';
+            let slopeUnit = `${yQty.unit}/${xQty.unit}`;
+            let slopeBadge = 'SLOPE';
+            let slopeInsight = '';
+
+            if (State.xAxis === 'time') {
+                if (State.yAxis === 'distance') {
+                    slopeQuantityName = 'Speed (v)';
+                    slopeUnit = 'm/s';
+                    slopeBadge = 'SPEED';
+                    slopeInsight = '<b>NCERT Fact:</b> The slope of a <b>Distance-Time</b> graph gives the <b>Speed</b> of the object ($v = \\Delta s / \\Delta t$).';
+                } else if (State.yAxis === 'displacement') {
+                    slopeQuantityName = 'Velocity (v)';
+                    slopeUnit = 'm/s';
+                    slopeBadge = 'VELOCITY';
+                    slopeInsight = '<b>NCERT Fact:</b> The slope of a <b>Displacement-Time</b> graph gives the <b>Velocity</b> with direction ($v = \\Delta x / \\Delta t$).';
+                } else if (State.yAxis === 'velocity' || State.yAxis === 'speed') {
+                    slopeQuantityName = 'Acceleration (a)';
+                    slopeUnit = 'm/s²';
+                    slopeBadge = 'ACCELERATION';
+                    slopeInsight = '<b>NCERT Fact:</b> The slope of a <b>Velocity-Time</b> graph gives the <b>Acceleration</b> of the object ($a = (v - u) / t$).';
+                } else if (State.yAxis === 'acceleration') {
+                    slopeQuantityName = 'Jerk (j)';
+                    slopeUnit = 'm/s³';
+                    slopeBadge = 'JERK';
+                    slopeInsight = 'Rate of change of acceleration over time ($j = \\Delta a / \\Delta t$).';
+                }
+            }
+
+            // Update Slope UI
+            document.getElementById('slopeMeaningBadge').textContent = slopeBadge;
+            document.getElementById('slopeFormulaText').textContent = 
+                `Slope = ΔY / ΔX = (${p2.y.toFixed(2)} - ${p1.y.toFixed(2)}) / (${p2.x.toFixed(2)} - ${p1.x.toFixed(2)})`;
+            document.getElementById('slopeArithmeticText').textContent = 
+                `= ${dy.toFixed(2)} ${yQty.unit} / ${dx.toFixed(2)} ${xQty.unit}`;
+            document.getElementById('slopeQuantityLabel').textContent = `${slopeQuantityName}:`;
+            document.getElementById('slopeValueDisplay').textContent = 
+                isFinite(slopeVal) ? `${slopeVal.toFixed(2)} ${slopeUnit}` : 'Undefined (Vertical)';
+            document.getElementById('slopePhysicsInsight').innerHTML = slopeInsight;
+
+            // 2. CALCULATE AREA UNDER CURVE
+            let totalArea = 0;
+            let geometricBreakdown = [];
+
+            for (let i = 0; i < pts.length - 1; i++) {
+                const dt = pts[i + 1].x - pts[i].x;
+                const y1 = pts[i].y;
+                const y2 = pts[i + 1].y;
+                // Trapezoidal segment: 1/2 * (y1 + y2) * dt
+                const trapArea = 0.5 * (y1 + y2) * dt;
+                totalArea += trapArea;
+            }
+
+            // Physical Interpretation of Area
+            let areaQuantityName = 'Area';
+            let areaUnit = `${yQty.unit}·${xQty.unit}`;
+            let areaBadge = 'INTEGRAL';
+            let areaInsight = '';
+
+            if (State.xAxis === 'time') {
+                if (State.yAxis === 'velocity') {
+                    areaQuantityName = 'Displacement (s)';
+                    areaUnit = 'm';
+                    areaBadge = 'DISPLACEMENT';
+                    areaInsight = '<b>NCERT Fact:</b> The area under a <b>Velocity-Time</b> graph gives the <b>Displacement</b> traveled by the object ($s = \\text{Area under } v-t$).';
+                } else if (State.yAxis === 'speed') {
+                    areaQuantityName = 'Distance (s)';
+                    areaUnit = 'm';
+                    areaBadge = 'DISTANCE';
+                    areaInsight = '<b>NCERT Fact:</b> The area under a <b>Speed-Time</b> graph gives the total <b>Distance</b> traveled by the body.';
+                } else if (State.yAxis === 'acceleration') {
+                    areaQuantityName = 'Change in Velocity (Δv)';
+                    areaUnit = 'm/s';
+                    areaBadge = 'CHANGE IN VELOCITY';
+                    areaInsight = '<b>NCERT Fact:</b> The area under an <b>Acceleration-Time</b> graph gives the <b>Change in Velocity</b> ($v - u = a \\cdot t$).';
+                } else if (State.yAxis === 'distance' || State.yAxis === 'displacement') {
+                    areaQuantityName = 'Distance · Time Product';
+                    areaUnit = 'm·s';
+                    areaBadge = 'm · s';
+                    areaInsight = '<b>Note:</b> Area under a Distance-Time graph has units $m \\cdot s$ and does not represent a standard Class 9 physical kinematic quantity.';
+                }
+            }
+
+            // Update Area UI
+            document.getElementById('areaMeaningBadge').textContent = areaBadge;
+            document.getElementById('areaRangeText').textContent = 
+                `${xQty.symbol} = ${pts[0].x.toFixed(1)}${xQty.unit} to ${pts[pts.length-1].x.toFixed(1)}${xQty.unit}`;
+            document.getElementById('areaFormulaText').textContent = 
+                `Area = ∑ ½(y₁ + y₂)Δx (Sum of ${pts.length - 1} trapezoids)`;
+            
+            // NCERT special geometric breakdown for first to last if 2 points
+            if (pts.length === 2) {
+                const u = pts[0].y;
+                const v = pts[1].y;
+                const t = pts[1].x - pts[0].x;
+                const rectArea = u * t;
+                const triArea = 0.5 * (v - u) * t;
+                document.getElementById('areaDecompositionText').textContent = 
+                    `Rectangle (${u.toFixed(1)}×${t.toFixed(1)}=${rectArea.toFixed(1)}) + Triangle (½×${(v-u).toFixed(1)}×${t.toFixed(1)}=${triArea.toFixed(1)})`;
+            } else {
+                document.getElementById('areaDecompositionText').textContent = 
+                    `Total cumulative region bounded by ${pts.length} coordinate vertices`;
+            }
+
+            document.getElementById('areaQuantityLabel').textContent = `${areaQuantityName}:`;
+            document.getElementById('areaValueDisplay').textContent = `${totalArea.toFixed(2)} ${areaUnit}`;
+            document.getElementById('areaPhysicsInsight').innerHTML = areaInsight;
+
+            // Update Slider Max Time
+            State.simMaxTime = pts[pts.length - 1].x;
+            const slider = document.getElementById('motionTimeSlider');
+            slider.max = State.simMaxTime;
+            document.getElementById('sliderTimeMax').textContent = `t = ${State.simMaxTime.toFixed(1)}s`;
+        }
+
+        /* =========================================================================
+           DATA TABLE & USER ENTRY SYNCHRONIZATION
+           ========================================================================= */
+        function renderDataTable() {
+            const tbody = document.getElementById('dataTableBody');
+            tbody.innerHTML = '';
+
+            const xQty = QUANTITIES[State.xAxis];
+            const yQty = QUANTITIES[State.yAxis];
+
+            document.getElementById('thColX').textContent = `X: ${xQty.symbol} (${xQty.unit})`;
+            document.getElementById('thColY').textContent = `Y: ${yQty.symbol} (${yQty.unit})`;
+
+            State.points.forEach((pt, idx) => {
+                const tr = document.createElement('tr');
+
+                // Segment slope to next point
+                let segSlopeText = '-';
+                if (idx < State.points.length - 1) {
+                    const nxt = State.points[idx + 1];
+                    const dX = nxt.x - pt.x;
+                    const dY = nxt.y - pt.y;
+                    if (dX !== 0) {
+                        segSlopeText = (dY / dX).toFixed(1);
+                    }
+                }
+
+                tr.innerHTML = `
+                    <td style="color:var(--text-muted); font-family:var(--font-mono); font-size:11px;">P${idx + 1}</td>
+                    <td><input type="number" step="any" class="table-input input-x" data-index="${idx}" value="${pt.x}"></td>
+                    <td><input type="number" step="any" class="table-input input-y" data-index="${idx}" value="${pt.y}"></td>
+                    <td style="font-family:var(--font-mono); font-size:11px; text-align:right; color:var(--accent-magenta);">${segSlopeText}</td>
+                    <td><button class="table-del-btn" data-index="${idx}" title="Delete Point"><i class="fa-solid fa-trash-can"></i></button></td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            // Attach input event listeners for instant reactivity
+            tbody.querySelectorAll('.input-x').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) {
+                        State.points[idx].x = val;
+                        drawGraph();
+                        analyzeMotion();
+                    }
+                });
+            });
+
+            tbody.querySelectorAll('.input-y').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) {
+                        State.points[idx].y = val;
+                        drawGraph();
+                        analyzeMotion();
+                    }
+                });
+            });
+
+            tbody.querySelectorAll('.table-del-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(btn.dataset.index);
+                    if (State.points.length > 2) {
+                        State.points.splice(idx, 1);
+                        SoundFX.play('click');
+                        renderDataTable();
+                        drawGraph();
+                        analyzeMotion();
+                    } else {
+                        alert('A motion graph must contain at least 2 data points for slope and area analysis.');
+                    }
+                });
+            });
+        }
+
+        /* =========================================================================
+           PHYSICAL MOTION SIMULATOR RUNNER
+           ========================================================================= */
+        function updateMotionRunner(timeSec) {
+            const pts = [...State.points].sort((a, b) => a.x - b.x);
+            if (pts.length === 0) return;
+
+            const tMax = pts[pts.length - 1].x;
+            const tMin = pts[0].x;
+            const clampedT = Math.max(tMin, Math.min(tMax, timeSec));
+
+            State.simCurrentTime = clampedT;
+
+            // Interpolate current values
+            const curY = interpolateY(clampedT);
+
+            let pos = 0;
+            let vel = 0;
+
+            if (State.xAxis === 'time') {
+                if (State.yAxis === 'distance' || State.yAxis === 'displacement') {
+                    pos = curY;
+                    // Instantaneous slope (velocity)
+                    const dt = 0.05;
+                    const yBefore = interpolateY(Math.max(tMin, clampedT - dt));
+                    const yAfter = interpolateY(Math.min(tMax, clampedT + dt));
+                    vel = (yAfter - yBefore) / (2 * dt);
+                } else if (State.yAxis === 'velocity' || State.yAxis === 'speed') {
+                    vel = curY;
+                    // Integrated distance
+                    pos = calculateIntegratedDistance(clampedT);
+                } else if (State.yAxis === 'acceleration') {
+                    // Accel graph
+                    vel = curY * clampedT; // approximate
+                    pos = 0.5 * curY * clampedT * clampedT;
+                }
+            } else {
+                pos = curY;
+                vel = 5;
+            }
+
+            // Update Track HUD
+            document.getElementById('hudTime').textContent = `${clampedT.toFixed(2)} s`;
+            document.getElementById('hudPos').textContent = `${pos.toFixed(2)} m`;
+            document.getElementById('hudVel').textContent = `${vel.toFixed(2)} m/s`;
+            
+            const stateLabel = document.getElementById('hudState');
+            if (Math.abs(vel) < 0.05) {
+                stateLabel.textContent = 'AT REST';
+                stateLabel.style.color = 'var(--accent-amber)';
+            } else if (vel > 0) {
+                stateLabel.textContent = 'FORWARD';
+                stateLabel.style.color = 'var(--accent-green)';
+            } else {
+                stateLabel.textContent = 'REVERSING';
+                stateLabel.style.color = 'var(--accent-magenta)';
+            }
+
+            // Move Vehicle on track road
+            const road = document.getElementById('trackRoad');
+            const car = document.getElementById('trackCar');
+            const roadWidth = road.clientWidth - 80; // keep within margins
+
+            // Normalize vehicle position visually between 0 and 100% of road
+            const maxPosRef = 100; // max track length in meters
+            const fraction = Math.max(0, Math.min(1, Math.abs(pos) / maxPosRef));
+            const pixelX = 20 + fraction * roadWidth;
+            car.style.left = `${pixelX}px`;
+
+            // Exhaust effect if moving
+            const exhaust = document.getElementById('carExhaust');
+            if (Math.abs(vel) > 0.1) {
+                exhaust.style.opacity = '0.8';
+            } else {
+                exhaust.style.opacity = '0';
+            }
+
+            // Sync Slider
+            document.getElementById('motionTimeSlider').value = clampedT;
+        }
+
+        function calculateIntegratedDistance(tEnd) {
+            const pts = [...State.points].sort((a, b) => a.x - b.x);
+            let total = 0;
+            for (let i = 0; i < pts.length - 1; i++) {
+                if (pts[i].x >= tEnd) break;
+                const segTStart = pts[i].x;
+                const segTEnd = Math.min(pts[i + 1].x, tEnd);
+                const dt = segTEnd - segTStart;
+                if (dt <= 0) continue;
+
+                const y1 = pts[i].y;
+                const ratio = dt / (pts[i + 1].x - pts[i].x);
+                const y2 = y1 + ratio * (pts[i + 1].y - y1);
+
+                total += 0.5 * (y1 + y2) * dt;
+            }
+            return total;
+        }
+
+        /* Animation Loop */
+        function simulationLoop(timestamp) {
+            if (!State.isPlaying) return;
+
+            if (!State.lastFrameTimestamp) State.lastFrameTimestamp = timestamp;
+            const deltaSec = (timestamp - State.lastFrameTimestamp) / 1000;
+            State.lastFrameTimestamp = timestamp;
+
+            State.simCurrentTime += deltaSec * State.simSpeed;
+
+            if (State.simCurrentTime >= State.simMaxTime) {
+                State.simCurrentTime = State.simMaxTime;
+                State.isPlaying = false;
+                document.getElementById('playIcon').className = 'fa-solid fa-play';
+                document.getElementById('playText').textContent = 'Replay Motion';
+            }
+
+            updateMotionRunner(State.simCurrentTime);
+            drawGraph();
+
+            if (State.isPlaying) {
+                State.animFrameId = requestAnimationFrame(simulationLoop);
+            }
+        }
+
+        /* =========================================================================
+           EVENT LISTENERS & INTERACTION
+           ========================================================================= */
+
+        // X-Axis and Y-Axis Selection
+        document.querySelectorAll('#xAxisOptions .quantity-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#xAxisOptions .quantity-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                State.xAxis = btn.dataset.qty;
+                const qty = QUANTITIES[State.xAxis];
+                document.getElementById('xAxisBadge').textContent = `${qty.name} ${qty.symbol} (${qty.unit})`;
+                SoundFX.play('click');
+                renderDataTable();
+                fitGraphToViewport();
+                analyzeMotion();
+            });
+        });
+
+        document.querySelectorAll('#yAxisOptions .quantity-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#yAxisOptions .quantity-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                State.yAxis = btn.dataset.qty;
+                const qty = QUANTITIES[State.yAxis];
+                document.getElementById('yAxisBadge').textContent = `${qty.name} ${qty.symbol} (${qty.unit})`;
+                SoundFX.play('click');
+                renderDataTable();
+                fitGraphToViewport();
+                analyzeMotion();
+            });
+        });
+
+        // Theme switching
+        const themePills = {
+            btnThemeMillimeter: 'millimeter',
+            btnThemeDarkLab: 'darklab',
+            btnThemeBlueprint: 'blueprint',
+            btnThemeSchoolMath: 'schoolmath'
+        };
+
+        Object.keys(themePills).forEach(id => {
+            const btn = document.getElementById(id);
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.theme-pills .pill-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                State.theme = themePills[id];
+                SoundFX.play('click');
+                drawGraph();
+            });
+        });
+
+        // Display Toggles
+        document.getElementById('chkShowSlope').addEventListener('change', (e) => {
+            State.showSlope = e.target.checked;
+            drawGraph();
+        });
+
+        document.getElementById('chkShowArea').addEventListener('change', (e) => {
+            State.showArea = e.target.checked;
+            drawGraph();
+        });
+
+        document.getElementById('chkShowCoords').addEventListener('change', (e) => {
+            State.showCoords = e.target.checked;
+            drawGraph();
+        });
+
+        document.getElementById('chkSmoothCurve').addEventListener('change', (e) => {
+            State.smoothCurve = e.target.checked;
+            drawGraph();
+        });
+
+        document.getElementById('btnSnapGrid').addEventListener('click', (e) => {
+            State.snapToGrid = !State.snapToGrid;
+            const btn = document.getElementById('btnSnapGrid');
+            btn.style.borderColor = State.snapToGrid ? 'var(--accent-cyan)' : 'var(--panel-border)';
+            SoundFX.play('snap');
+        });
+
+        // Add Point
+        document.getElementById('btnAddPoint').addEventListener('click', () => {
+            const pts = State.points;
+            const lastPt = pts[pts.length - 1];
+            const nextX = lastPt ? Number((lastPt.x + 2).toFixed(1)) : 2;
+            const nextY = lastPt ? Number((lastPt.y + 10).toFixed(1)) : 10;
+            State.points.push({ x: nextX, y: nextY });
+            SoundFX.play('click');
+            renderDataTable();
+            fitGraphToViewport();
+            analyzeMotion();
+        });
+
+        // Sort Points
+        document.getElementById('btnSortPoints').addEventListener('click', () => {
+            State.points.sort((a, b) => a.x - b.x);
+            SoundFX.play('click');
+            renderDataTable();
+            drawGraph();
+            analyzeMotion();
+        });
+
+        // Clear Points
+        document.getElementById('btnClearAll').addEventListener('click', () => {
+            State.points = [
+                { x: 0, y: 0 },
+                { x: 5, y: 25 }
+            ];
+            SoundFX.play('click');
+            renderDataTable();
+            fitGraphToViewport();
+            analyzeMotion();
+        });
+
+        // Reset View
+        document.getElementById('btnResetView').addEventListener('click', () => {
+            fitGraphToViewport();
+            SoundFX.play('click');
+        });
+
+        document.getElementById('btnCenterOrigin').addEventListener('click', () => {
+            fitGraphToViewport();
+            SoundFX.play('click');
+        });
+
+        // Zoom In & Out
+        document.getElementById('btnZoomIn').addEventListener('click', () => {
+            State.scaleX *= 1.25;
+            State.scaleY *= 1.25;
+            drawGraph();
+        });
+
+        document.getElementById('btnZoomOut').addEventListener('click', () => {
+            State.scaleX /= 1.25;
+            State.scaleY /= 1.25;
+            drawGraph();
+        });
+
+        // Slope Interval Selector change
+        document.getElementById('slopeIntervalSelect').addEventListener('change', (e) => {
+            State.slopeInterval = e.target.value;
+            drawGraph();
+            analyzeMotion();
+        });
+
+        // Playback Controls
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        btnPlayPause.addEventListener('click', () => {
+            if (State.isPlaying) {
+                State.isPlaying = false;
+                document.getElementById('playIcon').className = 'fa-solid fa-play';
+                document.getElementById('playText').textContent = 'Resume Motion';
+            } else {
+                if (State.simCurrentTime >= State.simMaxTime) {
+                    State.simCurrentTime = 0;
+                }
+                State.isPlaying = true;
+                State.lastFrameTimestamp = null;
+                document.getElementById('playIcon').className = 'fa-solid fa-pause';
+                document.getElementById('playText').textContent = 'Pause Motion';
+                SoundFX.play('success');
+                requestAnimationFrame(simulationLoop);
+            }
+        });
+
+        document.getElementById('btnStopMotion').addEventListener('click', () => {
+            State.isPlaying = false;
+            State.simCurrentTime = 0;
+            document.getElementById('playIcon').className = 'fa-solid fa-play';
+            document.getElementById('playText').textContent = 'Play Motion';
+            updateMotionRunner(0);
+            drawGraph();
+        });
+
+        // Manual Time Scrubber Slider
+        const timeSlider = document.getElementById('motionTimeSlider');
+        timeSlider.addEventListener('input', (e) => {
+            State.isPlaying = false;
+            document.getElementById('playIcon').className = 'fa-solid fa-play';
+            document.getElementById('playText').textContent = 'Play Motion';
+            updateMotionRunner(parseFloat(e.target.value));
+            drawGraph();
+        });
+
+        // Simulation Speed button
+        const btnSimSpeed = document.getElementById('btnSimSpeed');
+        btnSimSpeed.addEventListener('click', () => {
+            if (State.simSpeed === 1.0) State.simSpeed = 2.0;
+            else if (State.simSpeed === 2.0) State.simSpeed = 0.5;
+            else State.simSpeed = 1.0;
+            btnSimSpeed.textContent = `${State.simSpeed.toFixed(1)}x`;
+            SoundFX.play('click');
+        });
+
+        /* =========================================================================
+           CANVAS DIRECT INTERACTION: DRAG POINTS, PAN, ZOOM, HOVER
+           ========================================================================= */
+        function getCanvasMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const pos = getCanvasMousePos(e);
+
+            // Check if user clicked on any existing point (within 12px hit radius)
+            let clickedIdx = -1;
+            for (let i = 0; i < State.points.length; i++) {
+                const scr = worldToScreen(State.points[i].x, State.points[i].y);
+                const dist = Math.hypot(scr.x - pos.x, scr.y - pos.y);
+                if (dist <= 14) {
+                    clickedIdx = i;
+                    break;
+                }
+            }
+
+            if (clickedIdx !== -1) {
+                State.draggedPointIdx = clickedIdx;
+                canvas.style.cursor = 'grabbing';
+                SoundFX.play('click');
+            } else {
+                // Middle click or drag empty space to pan graph
+                State.isPanning = true;
+                State.panStartX = pos.x - State.originPixelX;
+                State.panStartY = pos.y - State.originPixelY;
+                canvas.style.cursor = 'grab';
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Update Cursor HUD
+            const worldCoords = screenToWorld(mouseX, mouseY);
+            document.getElementById('cursorCoordText').textContent = 
+                `X: ${worldCoords.x.toFixed(2)}, Y: ${worldCoords.y.toFixed(2)}`;
+
+            if (State.draggedPointIdx !== -1) {
+                // Dragging active point
+                let newWx = worldCoords.x;
+                let newWy = worldCoords.y;
+
+                if (State.snapToGrid) {
+                    newWx = Math.round(newWx * 2) / 2; // snap to 0.5
+                    newWy = Math.round(newWy * 2) / 2;
+                }
+
+                State.points[State.draggedPointIdx].x = newWx;
+                State.points[State.draggedPointIdx].y = newWy;
+
+                // Sync table
+                renderDataTable();
+                analyzeMotion();
+                drawGraph();
+            } else if (State.isPanning) {
+                // Panning canvas
+                State.originPixelX = mouseX - State.panStartX;
+                State.originPixelY = mouseY - State.panStartY;
+                drawGraph();
+            } else {
+                // Hover check
+                let hoverIdx = -1;
+                for (let i = 0; i < State.points.length; i++) {
+                    const scr = worldToScreen(State.points[i].x, State.points[i].y);
+                    const dist = Math.hypot(scr.x - mouseX, scr.y - mouseY);
+                    if (dist <= 12) {
+                        hoverIdx = i;
+                        break;
+                    }
+                }
+                if (State.hoveredPointIdx !== hoverIdx) {
+                    State.hoveredPointIdx = hoverIdx;
+                    canvas.style.cursor = hoverIdx !== -1 ? 'pointer' : 'crosshair';
+                    drawGraph();
+                }
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (State.draggedPointIdx !== -1) {
+                State.draggedPointIdx = -1;
+                canvas.style.cursor = 'crosshair';
+                // Auto sort after drag
+                State.points.sort((a, b) => a.x - b.x);
+                renderDataTable();
+                analyzeMotion();
+                drawGraph();
+            }
+            if (State.isPanning) {
+                State.isPanning = false;
+                canvas.style.cursor = 'crosshair';
+            }
+        });
+
+        // Wheel Zoom
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const pos = getCanvasMousePos(e);
+            const mouseWorldBefore = screenToWorld(pos.x, pos.y);
+
+            const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+            State.scaleX *= zoomFactor;
+            State.scaleY *= zoomFactor;
+
+            // Keep mouse world position fixed
+            State.originPixelX = pos.x - mouseWorldBefore.x * State.scaleX;
+            State.originPixelY = pos.y + mouseWorldBefore.y * State.scaleY;
+
+            drawGraph();
+        });
+
+        /* =========================================================================
+           STANDARD NCERT PRESETS
+           ========================================================================= */
+        const PRESETS = {
+            'uniform-velocity': {
+                xAxis: 'time',
+                yAxis: 'distance',
+                points: [
+                    { x: 0, y: 0 },
+                    { x: 2, y: 15 },
+                    { x: 4, y: 30 },
+                    { x: 6, y: 45 },
+                    { x: 8, y: 60 },
+                    { x: 10, y: 75 }
+                ]
+            },
+            'uniform-accel': {
+                xAxis: 'time',
+                yAxis: 'velocity',
+                points: [
+                    { x: 0, y: 0 },
+                    { x: 2, y: 6 },
+                    { x: 4, y: 12 },
+                    { x: 6, y: 18 },
+                    { x: 8, y: 24 },
+                    { x: 10, y: 30 }
+                ]
+            },
+            'stationary': {
+                xAxis: 'time',
+                yAxis: 'distance',
+                points: [
+                    { x: 0, y: 20 },
+                    { x: 2, y: 20 },
+                    { x: 4, y: 20 },
+                    { x: 6, y: 20 },
+                    { x: 8, y: 20 },
+                    { x: 10, y: 20 }
+                ]
+            },
+            'braking': {
+                xAxis: 'time',
+                yAxis: 'velocity',
+                points: [
+                    { x: 0, y: 25 },
+                    { x: 2, y: 20 },
+                    { x: 4, y: 15 },
+                    { x: 6, y: 10 },
+                    { x: 8, y: 5 },
+                    { x: 10, y: 0 }
+                ]
+            },
+            'trip-3phase': {
+                xAxis: 'time',
+                yAxis: 'velocity',
+                points: [
+                    { x: 0, y: 0 },
+                    { x: 3, y: 18 },
+                    { x: 7, y: 18 },
+                    { x: 10, y: 0 }
+                ]
+            },
+            'free-fall': {
+                xAxis: 'time',
+                yAxis: 'velocity',
+                points: [
+                    { x: 0, y: 0 },
+                    { x: 1, y: 9.8 },
+                    { x: 2, y: 19.6 },
+                    { x: 3, y: 29.4 },
+                    { x: 4, y: 39.2 }
+                ]
+            }
+        };
+
+        function loadPreset(presetKey) {
+            const preset = PRESETS[presetKey];
+            if (!preset) return;
+
+            State.xAxis = preset.xAxis;
+            State.yAxis = preset.yAxis;
+
+            // Sync left buttons
+            document.querySelectorAll('#xAxisOptions .quantity-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.qty === State.xAxis);
+            });
+            document.querySelectorAll('#yAxisOptions .quantity-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.qty === State.yAxis);
+            });
+
+            const xq = QUANTITIES[State.xAxis];
+            const yq = QUANTITIES[State.yAxis];
+            document.getElementById('xAxisBadge').textContent = `${xq.name} ${xq.symbol} (${xq.unit})`;
+            document.getElementById('yAxisBadge').textContent = `${yq.name} ${yq.symbol} (${yq.unit})`;
+
+            State.points = JSON.parse(JSON.stringify(preset.points));
+            SoundFX.play('success');
+            renderDataTable();
+            fitGraphToViewport();
+            analyzeMotion();
+            updateMotionRunner(0);
+        }
+
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                loadPreset(btn.dataset.preset);
+            });
+        });
+
+        // NCERT Derivations Modal
+        const modal = document.getElementById('derivationsModal');
+        document.getElementById('btnDerivations').addEventListener('click', () => {
+            modal.classList.add('active');
+            SoundFX.play('click');
+        });
+        document.getElementById('btnCloseModal').addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+        document.getElementById('btnLoadDerivationPreset').addEventListener('click', () => {
+            modal.classList.remove('active');
+            loadPreset('uniform-accel');
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('active');
+        });
+
+        /* =========================================================================
+           INITIALIZATION
+           ========================================================================= */
+        window.addEventListener('DOMContentLoaded', () => {
+            resizeCanvas();
+            renderDataTable();
+            analyzeMotion();
+            updateMotionRunner(0);
+        });
+    </script>
+</body>
+</html>
